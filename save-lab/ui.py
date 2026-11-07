@@ -4,7 +4,7 @@ import json
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, font
 from pathlib import Path
-from save_lab import Workspace, LabError, engine, save_new
+from save_lab import Workspace, LabError, engine, save_new, configured_save_directory
 
 BG = '#f4f4f5'
 INK = '#202124'
@@ -18,6 +18,7 @@ class App:
     def __init__(self, root):
         self.root = root
         self.work = Workspace()
+        self.initial_directory = configured_save_directory()
         self.member_id = None
         self.catalog = engine('catalog')
         self.gear = {x['id']: x for x in self.catalog['gear']}
@@ -168,7 +169,7 @@ class App:
         return True
 
     def open_file(self):
-        path = filedialog.askopenfilename(title='5525セーブJSONを選択', filetypes=[('JSON', '*.json')], parent=self.root)
+        path = filedialog.askopenfilename(title='5525セーブJSONを選択', filetypes=[('JSON', '*.json')], initialdir=self.initial_directory, parent=self.root)
         if path and self.discard_ok():
             def action():
                 self.work.open(path); self.member_id = None; self.refresh(); self.status.set('原本Aを読み込み、作業Bをメモリ内に複製しました')
