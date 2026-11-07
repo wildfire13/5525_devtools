@@ -36,12 +36,13 @@ function delivery(s) {
   if (probe.phase !== 'town') return {available:false, actionAccepted:false, reason:'街での到着処理後に納品判定します', result:null};
   const view = C.view(probe), shown = view.activeQuest;
   if (!C.completeQuest(probe)) {
-    const reason = !view.cargoAboard ? '荷物を持つポーターが編成にいません' : q.eventId === 'wheel' && shown.merchantTraveling ? '行商人はまだ到着していません' : q.eventId === 'wheel' && shown.merchantDeparted ? '行商人は出発済みです。失敗処理はサウスでのみ可能です' : '納品先にいません';
+    const meeting = shown.meeting;
+    const reason = meeting?.reason === 'before_arrival' ? `この町で行商人の到着を待てます（${meeting.waitHours}時間）` : !view.cargoAboard ? '荷物を持つポーターが編成にいません' : q.eventId === 'wheel' && shown.merchantTraveling ? '行商人はまだ到着していません' : q.eventId === 'wheel' && shown.merchantDeparted ? '行商人は出発済みです。どの町でも期限切れを確認できます' : '納品先にいません';
     return {available:false, actionAccepted:false, reason, result:null};
   }
   verified(probe);
   const result = clone(probe.result), available = result.outcome !== 'failed';
-  return {available, actionAccepted:true, reason:available ? result.outcome === 'late' ? '納品可能・基本報酬' : '納品可能・希望条件達成' : '失敗処理・受注前へ復元', result};
+  return {available, actionAccepted:true, reason:available ? result.outcome === 'late' ? '納品可能・基本報酬' : '納品可能・希望条件達成' : '失敗処理・受注前へ復元（世界時刻は維持）', result};
 }
 // These are observed stage/settlement disagreements, not overrides of the vendor.
 function discrepancies(s, view, settlement) {
@@ -55,6 +56,12 @@ function discrepancies(s, view, settlement) {
     : eventId === 'wheel' && age === 36 && stage === 'departed'
     ? ['wheel_departed_but_late', '車輪は36時間ちょうどでdeparted表示ですが、現在の納品条件では基本報酬110Gになります。'] : null;
   return known ? [{code:known[0],eventId,age,stage,settlement:{outcome:result.outcome,gold:result.gold,rp:result.rp,xp:result.xp},message:'段階表示と納品処理の境界差: '+known[1]+' 納品可否はcompleteQuestの実結果を基準にします。'}] : [];
+}
+function waitProbe(s) {
+  const probe = clone(s), expected = C.recipientMeeting(probe)?.waitExpected;
+  if (!C.waitForEvent(probe, expected)) return null;
+  const after = verified(probe);
+  return {hours:after.worldTime-s.worldTime,worldTime:after.worldTime,calendarAge:after.worldTime-after.standaloneEvents.epoch,meeting:clone(C.recipientMeeting(after)),delivery:delivery(after)};
 }
 function arrivalProbe(s, delta, destination) {
   const probe = clone(s), travelled = (probe.journey?.hours || 0) + delta;
@@ -81,7 +88,7 @@ function forecasts(s) {
     const delta = total - probe.journey.hours, destination = choice === 'turnBack' ? probe.journey.origin : probe.journey.destination;
     const arriving = arrivalProbe(probe, delta, destination);
     const arrivalView = C.view(arriving), settlement = delivery(arriving), differences = discrepancies(arriving, arrivalView, settlement);
-    rows.push({choice, label:{short:'近道で進む',safe:'迂回で進む',rest:'休息して進む',turnBack:'引き返す'}[choice], additionalHours:delta, worldTime:arriving.worldTime, calendarAge:arriving.worldTime-arriving.standaloneEvents.epoch, destination, destinationName:place(destination), scenarioStages:clone(arrivalView.scenarioStages), officialForecast:forecast, delivery:settlement, discrepancies:differences, warnings:differences.map(d => d.message)});
+    rows.push({choice, label:{short:'近道で進む',safe:'迂回で進む',rest:'休息して進む',turnBack:'引き返す'}[choice], additionalHours:delta, worldTime:arriving.worldTime, calendarAge:arriving.worldTime-arriving.standaloneEvents.epoch, destination, destinationName:place(destination), scenarioStages:clone(arrivalView.scenarioStages), officialForecast:forecast, delivery:settlement, afterWait:waitProbe(arriving), discrepancies:differences, warnings:differences.map(d => d.message)});
   }
   return rows;
 }
@@ -100,7 +107,7 @@ function timeline(save, suppliedOptions) {
   if (opt.destination && !C.depart(s, opt.destination)) fail('検証コピーで出発できません。街・経路・所持枠・ポーターHPを確認してください');
   const current = verified(s), view = C.view(current), q = view.activeQuest;
   const currentDelivery = delivery(current), rows = forecasts(current), age = current.worldTime-current.standaloneEvents.epoch;
-  const wait = clone(current), canWait = C.waitForEvent(wait);
+  const afterWait = waitProbe(current);
   const arrival = clone(current), canArrive = current.phase === 'arrival' && C.arrive(arrival);
   const differences = discrepancies(current, view, currentDelivery);
   const warnings = differences.map(d => d.message);
@@ -115,12 +122,14 @@ function timeline(save, suppliedOptions) {
     activeQuest:q ? {...q,fromName:place(q.from),toName:place(q.to),timeBasis:q.eventId?'calendar':'quest',conditionHours:q.deadline,conditionClock:q.eventId?age:(q.elapsedHours||0)+(current.journey?.hours||0)} : null,
     availableQuests:offered, selectedQuestId:selectedId, carriers, destinations:current.phase === 'town' ? view.destinations : [],
     delivery:currentDelivery, forecasts:rows, discrepancies:differences,
-    waitForMerchant:canWait ? {hours:wait.worldTime-current.worldTime,worldTime:wait.worldTime,delivery:delivery(verified(wait))} : null,
-    afterArrival:canArrive ? {locationName:place(arrival.location),delivery:delivery(verified(arrival))} : null,
+    waitForMerchant:afterWait,
+    afterArrival:canArrive ? {locationName:place(arrival.location),delivery:delivery(verified(arrival)),afterWait:waitProbe(arrival)} : null,
+    aftermath:clone(C.scenarioAftermath(current)),
     calendar:{epoch:current.standaloneEvents.epoch,events:clone(current.standaloneEvents.events),
-      schedule:[{at:10, label:'行商人がアスタリスに到着', detail:'10以上・18未満で受取'}, {at:18,label:'行商人がサウスへ / カブの希望条件',detail:'行商人は18以上・36以下。カブは18ちょうどまで'}, {at:20,label:'最後の窯の希望条件',detail:'20以上・21未満はclosed表示ですが、20ちょうどまで納品成功'}, {at:21,label:'窯の段階表示: 焼成',detail:'21以上・22未満はfired。納品期限は20以下のため、21以降は納品先で失敗処理'}, {at:22,label:'窯の段階表示: 冷却',detail:'22以上・23未満はcooling。時刻のみの段階表示であり、納品成功を意味しません'}, {at:23,label:'窯の段階表示: 返却',detail:'23以上はreturned。窯焚きの後日談は依頼完了済み・23以上・現在地イースの場合のみ表示'}, {at:24,label:'車輪の希望条件',detail:'24ちょうどまで満額220G、超過後は110G'}, {at:36,label:'車輪の受取最終時刻',detail:'36ちょうどは110G。超過後はサウスで失敗処理'}]},
+      schedule:[{at:10, label:'行商人がアスタリスに到着', detail:'10以上・18未満で受取'}, {at:18,label:'行商人がサウスへ / カブの希望条件',detail:'行商人は18以上・36以下。カブは18ちょうどまで'}, {at:20,label:'最後の窯の希望条件',detail:'20以上・21未満はclosed表示ですが、20ちょうどまで納品成功'}, {at:21,label:'窯の段階表示: 焼成',detail:'21以上・22未満はfired。納品期限は20以下のため、21以降は納品先で失敗処理'}, {at:22,label:'窯の段階表示: 冷却',detail:'22以上・23未満はcooling。時刻のみの段階表示であり、納品成功を意味しません'}, {at:23,label:'窯の段階表示: 返却',detail:'23以上はreturned。窯焚きの後日談は依頼完了済み・23以上・現在地イースの場合のみ表示'}, {at:24,label:'車輪の希望条件',detail:'24ちょうどはsouth_full・満額220G、超過後はsouth_late・110G'}, {at:36,label:'車輪の受取最終時刻',detail:'36ちょうどはsouth_late・110G。超過後はdeparted、どの町でも確認後に失敗処理'}, {at:37,label:'未受注の荷車のあと',detail:'未受注・募集終了（missed）でサウスにいる場合のみ表示。受注済みの失敗とは別'}]},
     assumptions:[
-      '固定参照版の実装検証です。企画用シナリオや新しい条件は作成・編集しません。',
+      `公式ゲームの固定参照 ${manifest.sourceSha} に基づく検証です。別SHAのゲームの動作は保証しません。`,
+      '到着直後と待機後は別々の独立コピーで実処理を確認します。待機だけでは自動納品・報酬受取・回復を行いません。',
       '検証コピーのみで受注・時刻追加・出発を仮定し、原本A・作業B・実ファイルは変更しません。コピーをゲームのセーブとして書き出す機能はありません。',
       '追加時間は時間条件だけを調べる仮定です。移動、回復、戦闘や所持品消費を再現しません。受注を選んだ場合はコピーで受注してから追加します。',
       '予測は公式forecastを使用。次の区間は近道2h / 迂回4h、戦闘各1h、その先は近道・休息なしを仮定します。休息は2hです。戦闘勝利と荷物維持が前提です。',
@@ -152,11 +161,11 @@ function boundaryComparison(save, suppliedOptions) {
     // time and departing normally. No settled/failed probe feeds a later row.
     const report = timeline(save, {...opt,advanceHours:(opt.advanceHours || 0)+age-baselineAge});
     const snapshot = {
-      stage:report.state.scenarioStages[eventId],delivery:report.delivery,
-      forecasts:report.forecasts,warnings:report.warnings,discrepancies:report.discrepancies
+      stage:report.state.scenarioStages[eventId],delivery:report.delivery,aftermath:report.aftermath,
+      waitForMerchant:report.waitForMerchant,forecasts:report.forecasts,warnings:report.warnings,discrepancies:report.discrepancies
     };
-    const previous = {...snapshot,stage:baseline.state.scenarioStages[eventId],delivery:baseline.delivery,
-      forecasts:baseline.forecasts,warnings:baseline.warnings,discrepancies:baseline.discrepancies};
+    const previous = {...snapshot,stage:baseline.state.scenarioStages[eventId],delivery:baseline.delivery,aftermath:baseline.aftermath,
+      waitForMerchant:baseline.waitForMerchant,forecasts:baseline.forecasts,warnings:baseline.warnings,discrepancies:baseline.discrepancies};
     const changes = Object.keys(snapshot).filter(key => JSON.stringify(snapshot[key]) !== JSON.stringify(previous[key]))
       .map(field => ({field,before:clone(previous[field]),after:clone(snapshot[field])}));
     rows.push({...base,status:'run',activeEventId:report.activeQuest?.eventId || null,state:report.state,...snapshot,changes});

@@ -24,7 +24,7 @@ def check_qa_rows(label):
 def run():
     success=False
     try:
-        check('fixed version and SHA visible in title','v0.3.0' in root.title() and '22e0b190' in root.title())
+        check('fixed version and SHA visible in title','v0.3.1' in root.title() and json.loads((Path(__file__).resolve().parents[1]/'vendor/source-manifest.json').read_text(encoding='utf-8'))['sourceSha'][:8] in root.title())
         check('synthetic QA can open without importing any save',app.work.after is None and len(app.qa.catalog['cases'])==22)
         root.geometry('1000x720');app.tabs.select(app.qa.frame);root.update();check_qa_rows('QA first two rows visible before generation at 1000x720')
         with tempfile.TemporaryDirectory() as directory:

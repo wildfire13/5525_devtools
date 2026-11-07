@@ -105,6 +105,7 @@ class TimelinePanel:
             self.clock.set('入力を変更しました。「条件を検証」で再計算してください')
             self.quest_summary.set('前回の納品判定を消去しました。原本A・作業Bは未変更')
             self.warnings.set('')
+            self.details.configure(state='normal'); self.details.delete('1.0', 'end'); self.details.configure(state='disabled')
 
     def invalidate(self):
         self.frozen = None; self.report = None
@@ -177,22 +178,31 @@ class TimelinePanel:
                     self.boundary_notes[item] = row.get('reason','基準時刻より前なので実行しません。時刻は巻き戻しません')
                     continue
                 changes = row.get('changes',[])
-                labels = {'stage':'段階','delivery':'納品','forecasts':'経路','warnings':'警告','discrepancies':'境界差'}
+                labels = {'stage':'段階','delivery':'納品','forecasts':'経路','waitForMerchant':'待機','aftermath':'後日談','warnings':'警告','discrepancies':'境界差'}
                 diff = ' / '.join(labels.get(c['field'],c['field']) for c in changes) or '変化なし'
                 detail = '\n'.join(row.get('warnings',[]))
                 for change in changes:
                     key, before, after = change['field'], change['before'], change['after']
                     if key == 'stage': detail += f'\n段階: {before} → {after}'
                     elif key == 'delivery': detail += f'\n納品: {before["reason"]} ({reward_text(before)}) → {after["reason"]} ({reward_text(after)})'
+                    elif key == 'waitForMerchant': detail += '\n待機可否・待機後の納品結果を再計算しました。詳細は比較JSONを参照してください'
                     elif key == 'forecasts': detail += '\n経路の到着時刻・納品判定を再計算しました。全差分は比較JSONに保存できます'
                     else: detail += f'\n{labels.get(key,key)}: {len(before)}件 → {len(after)}件'
                 current = row['delivery']
                 item = self.boundary_tree.insert('', 'end', values=(f'{row["age"]}h',names[row['eventId']]+' / 現在地',row['state']['locationName'],row['stage'],current['reason'],reward_text(current),diff), tags=('warning',) if row.get('discrepancies') else ())
                 self.boundary_notes[item] = detail.strip() or '基準と同じ判定です。各行は入力コピーから独立して実行しています'
+                if row.get('waitForMerchant'):
+                    wait = row['waitForMerchant']; delivery = wait['delivery']
+                    item = self.boundary_tree.insert('', 'end', values=(f'{wait["calendarAge"]}h',f'{row["age"]}h + 到着待ち',row['state']['locationName'],'待機後',delivery['reason'],reward_text(delivery),'公式待機後の判定'))
+                    self.boundary_notes[item] = '待機で回復や自動納品は行いません。納品結果は別の独立コピーで実行した結果です'
                 for forecast in row['forecasts']:
                     delivery = forecast['delivery']
                     item = self.boundary_tree.insert('', 'end', values=(f'{forecast["calendarAge"]}h',f'{row["age"]}h + {forecast["label"]}',forecast['destinationName'],forecast.get('scenarioStages',{}).get(row['eventId'],'—'),delivery['reason'],reward_text(delivery),'到着時点の判定'), tags=('warning',) if forecast.get('discrepancies') else ())
                     self.boundary_notes[item] = '\n'.join(forecast.get('warnings',[])) or '戦闘勝利・荷物維持を仮定した到着時点。現在地の段階表示とは別です'
+                    if forecast.get('afterWait'):
+                        wait = forecast['afterWait']; delivery = wait['delivery']
+                        item = self.boundary_tree.insert('', 'end', values=(f'{wait["calendarAge"]}h',forecast['label']+' → 到着待ち',forecast['destinationName'],'待機後',delivery['reason'],reward_text(delivery),'公式待機後の判定'))
+                        self.boundary_notes[item] = '到着直後とは別に、公式の待機処理後の納品を独立コピーで確認しました'
             self.export_button.configure(text='境界比較JSONを別名保存')
             self.app.status.set('境界前後を独立コピーで比較しました。未実行の時刻と実行結果を区別しています')
         except (LabError, OSError, ValueError) as exc: self.error(exc)
@@ -203,6 +213,7 @@ class TimelinePanel:
         self.tree.delete(*self.tree.get_children())
         self.clock.set('検証できません。入力を修正して再実行してください')
         self.quest_summary.set(str(exc)); self.warnings.set('原本A・作業B・検証元コピーは未変更')
+        self.details.configure(state='normal'); self.details.delete('1.0', 'end'); self.details.configure(state='disabled')
         messagebox.showerror('条件を検証できません', str(exc), parent=self.app.root)
 
     def render(self, report):
@@ -216,17 +227,25 @@ class TimelinePanel:
         else: self.quest_summary.set('未受注 / 検証する既存の依頼を選択できます。新しいシナリオの作成・編集は行いません')
         self.warnings.set('\n'.join(report['warnings']))
         self.tree.delete(*self.tree.get_children())
-        rows = [('現在地で納品', clock['worldTime'], state['locationName'], report['delivery'])]
+        current_action = '現在地で期限切れ確認' if (report['delivery'].get('result') or {}).get('outcome') == 'failed' else '現在地で納品'
+        rows = [(current_action, clock['worldTime'], state['locationName'], report['delivery'])]
         if report['afterArrival']: rows.append(('到着処理後',clock['worldTime'],report['afterArrival']['locationName'],report['afterArrival']['delivery']))
         if report['waitForMerchant']:
             wait = report['waitForMerchant']; rows.append((f'行商人を待つ (+{wait["hours"]}h)',wait['worldTime'],state['locationName'],wait['delivery']))
-        for row in report['forecasts']: rows.append((f'{row["label"]} (+{row["additionalHours"]}h)',row['worldTime'],row['destinationName'],row['delivery']))
+        if report['afterArrival'] and report['afterArrival'].get('afterWait'):
+            wait = report['afterArrival']['afterWait']; rows.append((f'到着処理 → 待つ (+{wait["hours"]}h)',wait['worldTime'],report['afterArrival']['locationName'],wait['delivery']))
+        for row in report['forecasts']:
+            rows.append((f'{row["label"]} (+{row["additionalHours"]}h)',row['worldTime'],row['destinationName'],row['delivery']))
+            if row.get('afterWait'):
+                wait = row['afterWait']; rows.append((f'{row["label"]} → 待つ (+{wait["hours"]}h)',wait['worldTime'],row['destinationName'],wait['delivery']))
         for label, time, location, delivery in rows:
             self.tree.insert('', 'end', values=(label,f'{time}h',location,delivery['reason'],reward_text(delivery)), tags=('available' if delivery['available'] else 'blocked',))
         self.schedule.delete(*self.schedule.get_children())
         for event in report['calendar']['schedule']:
             self.schedule.insert('', 'end', values=(f'{event["at"]}h',event['label'],event['detail']))
         details = f'参照版: {report["sourceSha"]}\n{report["sourceUrl"]}\n\n' + '\n\n'.join(report['assumptions'])
+        if report.get('aftermath'):
+            details += '\n\n現在地で発生する後日談\n' + '\n\n'.join(item['name'] + '\n' + '\n'.join(line[1] for line in item.get('story', [])) for item in report['aftermath'])
         self.details.configure(state='normal'); self.details.delete('1.0', 'end'); self.details.insert('1.0', details); self.details.configure(state='disabled'); self.details.yview_moveto(0)
         self.export_button.configure(state='normal')
 

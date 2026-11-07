@@ -35,10 +35,10 @@ test('wheel boundaries match direct completeQuest at 9/10/17/18/23/24/25/35/36/3
     if(available)assert.equal(r.delivery.result.gold,age<=24?220:110);
   }
 });
-test('exact 24 and 36 expose stage/settlement difference without correcting source',()=>{
-  for(const [age,stage,gold] of [[24,'south_late',220],[36,'departed',110]]){
+test('candidate 24 and 36 stages agree with inclusive settlement',()=>{
+  for(const [age,stage,gold] of [[24,'south_full',220],[36,'south_late',110]]){
     const r=run(accepted('wheel',age,'south'));
-    assert.equal(r.state.scenarioStages.wheel,stage);assert.equal(r.delivery.result.gold,gold);assert(r.warnings.some(w=>w.includes('境界差')));
+    assert.equal(r.state.scenarioStages.wheel,stage);assert.equal(r.delivery.result.gold,gold);assert(!r.warnings.some(w=>w.includes('境界差')));
   }
 });
 test('turnip18 and kiln20 are inclusive, one hour later fails',()=>{
@@ -62,7 +62,7 @@ test('normal and experience rewards use settlement, not the generic forecast amo
 });
 test('wrong destination cannot claim a payable reward even when official forecast is positive',()=>{
   const r=run(C.create(),{questId:'standalone-kiln',destination:'north'});
-  assert.equal(r.forecasts[0].officialForecast.reward,150);assert.equal(r.forecasts[0].delivery.available,false);assert.equal(r.forecasts[0].delivery.result,null);
+  assert.equal(r.forecasts[0].officialForecast.reward,0);assert.equal(r.forecasts[0].delivery.available,false);assert.equal(r.forecasts[0].delivery.result,null);
 });
 test('forecast wheel handoff follows arrival stop and inclusive final hour',()=>{
   const s=accepted('wheel',18,'east');let r=run(s,{destination:'south'});
@@ -136,15 +136,17 @@ test('arrival forecasts include observed boundary discrepancies and schedule is 
 test('forecast stages belong to actual arrival ages 20, 24 and 36, not departure',()=>{
   for(const [eventId,start,destination,age,stage] of [
     ['kiln',14,'east',20,'closed'],
-    ['wheel',18,'south',24,'south_late'],
-    ['wheel',30,'south',36,'departed']
+    ['wheel',18,'south',24,'south_full'],
+    ['wheel',30,'south',36,'south_late']
   ]){
     const report=run(accepted(eventId,start,eventId==='kiln'?'astaris':'east'),{destination});
     const forecast=report.forecasts.find(row=>row.choice==='short');
     assert.equal(forecast.calendarAge,age);
     assert.equal(forecast.scenarioStages[eventId],stage);
-    assert.notEqual(forecast.scenarioStages[eventId],report.state.scenarioStages[eventId]);
-    assert.equal(forecast.discrepancies[0].stage,forecast.scenarioStages[eventId]);
+    if(eventId==='kiln')assert.notEqual(forecast.scenarioStages[eventId],report.state.scenarioStages[eventId]);
+    else assert.equal(forecast.scenarioStages[eventId],report.state.scenarioStages[eventId]); // Candidate inclusive windows intentionally retain the same stage at 24/36.
+    if(eventId==='kiln')assert.equal(forecast.discrepancies[0].stage,forecast.scenarioStages[eventId]);
+    else assert.deepEqual(forecast.discrepancies,[]);
   }
 });
 
