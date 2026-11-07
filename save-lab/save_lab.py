@@ -45,8 +45,28 @@ def load_json(path):
         raise LabError('UTF-8のJSONファイルを選択してください') from exc
     return value, hashlib.sha256(raw).hexdigest()
 
+def configured_save_directory():
+    """Optional dialog starting directory, without selecting or reading a save."""
+    directory = os.environ.get('SAVE_LAB_SAVE_DIR', '').strip()
+    config_path = ROOT / 'save-lab.local.json'
+    if not directory and config_path.exists():
+        if config_path.stat().st_size > 4096:
+            raise LabError('save-lab.local.jsonは4 KiB以内で指定してください')
+        config = parse_json(config_path.read_text(encoding='utf-8-sig'))
+        if not isinstance(config, dict) or any(k not in ('python', 'saveDirectory') or not isinstance(v, str) or any(c in v for c in ('\r', '\n', '\0')) for k, v in config.items()):
+            raise LabError('save-lab.local.jsonには文字列のpythonとsaveDirectoryを指定してください')
+        directory = config.get('saveDirectory', '').strip()
+    if not directory:
+        return None
+    target = Path(directory).expanduser()
+    if not target.is_absolute():
+        target = ROOT / target
+    if not target.is_dir():
+        raise LabError(f'設定したセーブフォルダが見つかりません: {target}')
+    return str(target.resolve())
+
 def engine(cmd, **values):
-    node = shutil.which('node')
+    node = os.environ.get('SAVE_LAB_NODE', '').strip() or shutil.which('node')
     if not node:
         raise LabError('Node.jsが見つかりません。Node.js 18以降をインストールしてください')
     env = os.environ.copy()

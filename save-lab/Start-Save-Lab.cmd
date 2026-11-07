@@ -1,21 +1,21 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-where node >nul 2>nul
-if errorlevel 1 (
-  echo Node.js 18 or newer is required. See README.md.
-  pause
-  exit /b 1
-)
-if defined SAVE_LAB_PYTHON (
-  "%SAVE_LAB_PYTHON%" save_lab.py gui
-  if errorlevel 1 pause
-  exit /b
-)
-where py >nul 2>nul
-if not errorlevel 1 (
-  py -3 save_lab.py gui
+if defined SAVE_LAB_NODE (
+  "%SAVE_LAB_NODE%" launch.cjs --gui
 ) else (
-  python save_lab.py gui
+  where node >nul 2>nul
+  if errorlevel 1 (
+    echo Node.js 18 or newer is required.
+    echo Set SAVE_LAB_NODE to your existing node.exe path. See README.md.
+    pause
+    exit /b 2
+  )
+  node launch.cjs --gui
 )
-if errorlevel 1 pause
+if errorlevel 1 (
+  echo.
+  echo Launch failed. Run Diagnose-Save-Lab.cmd for details.
+  pause
+  exit /b 2
+)

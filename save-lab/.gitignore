@@ -5,3 +5,6 @@ outputs/
 *.log
 # User saves belong outside source control.
 user-saves/
+
+# Per-PC runtime paths and private save location
+save-lab.local.json

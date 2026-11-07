@@ -21,7 +21,32 @@
 3. 最初は「公式サンプルを作成」で試す
 4. 「入力を反映」→ 比較タブで差分を確認 →「Bを別名保存」
 
-Pythonを用意する場合はpython.orgのWindows版でTcl/Tkを含めてください。Node.jsはnodejs.orgのLTS版を使えます。既に5525の動作環境がある場合はそれを利用してください。このツールはインストールやPC設定変更を自動実行しません。複数Pythonがある場合は、環境変数 `SAVE_LAB_PYTHON` に既存のTk対応Python実体のパスを指定するとランチャーがそれを使用します。
+既存のPythonを探し、Python 3.10以上・SQLite・Tkの実起動を確認してから開きます。PATH上の実体を `py` の既定版より先に試すため、壊れた別バージョンの登録に引っ張られにくくしています。候補の起動前検証に失敗したときだけ次を試し、アプリ起動後のエラーでは二重起動しません。
+
+### 場所を設定するファイル
+
+`save-lab.config.example.json` を同じフォルダで `save-lab.local.json` にコピーします。空欄は自動検出です。
+
+```json
+{
+  "python": "C:/Python313/python.exe",
+  "saveDirectory": "C:/Games/5525"
+}
+```
+
+上記は書式例です。`python` は実際に起動できるPython実体、`saveDirectory` は「セーブを開く」の初期フォルダへ置き換えてください。Windowsでも `/` 区切りで指定すると、バックスラッシュのエスケープが不要です。セーブファイルは自動選択・読込しません。
+
+`save-lab.local.json` はPC固有設定としてGitの対象外です。配布ZIPや公開リポジトリに自分の設定ファイルを追加しないでください。既存PythonやWindows環境設定を変更する必要はありません。
+
+既存の `SAVE_LAB_PYTHON` 環境変数も利用でき、設定ファイルより優先します。明示指定が起動前検証に失敗した場合は、警告を表示して他の既存Pythonを試します。実際に選んだパスは `[Using Python]` に表示されます。
+
+Node.jsがPATH上にない場合は、同じcmdで `set "SAVE_LAB_NODE=C:\実際の場所\node.exe"` を指定してから起動できます。Nodeの自動インストールはしません。
+
+### 起動しない場合の診断
+
+`Diagnose-Save-Lab.cmd` をダブルクリックすると、試したPython・失敗理由・実際に使えるPython/Tkの結果を表示します。アプリやセーブは開かず、ソフト導入・登録変更は行いません。診断の出力にはローカルのパスが含まれるため、公開しないでください。
+
+Pythonが未導入の場合だけ、python.orgのWindows版（Tcl/Tk付き）とnodejs.orgのLTS版を用意してください。このツールはインストールやPC設定変更を自動実行しません。
 
 ソース同梱版です。単体EXEではなくPython/Node.jsが必要です。日本語表示にはWindows標準のYu Gothic UI/Meiryoなどを利用します。
 
@@ -43,7 +68,7 @@ python3 save_lab.py edit fresh.json --patch examples/gold-and-growth.patch.json 
 python3 save_lab.py compare fresh.json trial.json --out comparison.json
 ```
 
-Windowsでは `python3` を `py -3` に置き換えます。出力先が存在する場合は失敗します。`--force` はありません。
+Windowsでは `python3` を診断で確認できたPython実体のパス（例: `"C:/Python313/python.exe"`）に置き換えます。壊れた既定版がある場合は `py -3` を使わないでください。出力先が存在する場合は失敗します。`--force` はありません。
 
 パッチは許可された項目だけを受け付けます。EXPに合わせてLv・スキルポイント・未配分能力ポイントを整合。未配分が負になる変更、HP/MP上限超過、装備条件違反、未知のキーを拒否します。
 
@@ -86,12 +111,15 @@ Windowsでは `python3` を `py -3` に置き換えます。出力先が存在�
 ```sh
 python3 -m unittest discover -s tests -v
 node tests/test_engine.cjs
+node tests/test_launcher.cjs
 ```
 
 同梱公式テストは `vendor/5525/native` で実行可能。実施結果・GUI検証範囲は `notes/verification.md` を参照。
 
 ## 構成・共有元
 
+- `launch.cjs`: Python実体の自動検出、Tk/SQLite起動前検証、診断
+- `save-lab.config.example.json`: PC固有設定のひな型
 - `save_lab.py`: CLI、原本保護、新規ファイル出力
 - `ui.py`: ネイティブTk画面
 - `engine.cjs`: 公式エンジンへの限定アダプタ
