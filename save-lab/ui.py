@@ -126,7 +126,7 @@ class App:
             box.grid(row=row, column=1, sticky='ew', pady=4)
             self.equipment[slot] = (var, box)
             self.member_controls.append(box); var.trace_add('write', self.mark_dirty)
-        footer = ttk.Frame(right); footer.pack(fill='x', pady=(12, 0))
+        footer = ttk.Frame(right); footer.pack(side='bottom', fill='x', pady=(12, 0), before=scroll_area)
         self.apply_button = ttk.Button(footer, text='入力を反映', command=self.apply_member, style='Accent.TButton', state='disabled'); self.apply_button.pack(side='right')
         ttk.Label(footer, text='EXPからLvを調整', style='Muted.TLabel').pack(side='left')
         compare_top = ttk.Frame(compare); compare_top.pack(fill='x', pady=(0, 12))

@@ -7,7 +7,8 @@ import tkinter as tk
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from ui import App
-from save_lab import load_json
+from save_lab import load_json, save_new
+from test_metadata_files import with_metadata, metadata
 Path('notes').mkdir(exist_ok=True)
 root=tk.Tk();app=App(root)
 results=[]
@@ -49,6 +50,19 @@ def run():
         app.tabs.select(0);root.update()
         check('apply action fits in window',app.apply_button.winfo_rooty()+app.apply_button.winfo_height()<=root.winfo_rooty()+root.winfo_height())
         check('equipment panel scrolls',app.edit_canvas.yview()[1]<1)
+        with tempfile.TemporaryDirectory() as directory:
+            source=Path(directory)/'synthetic-portraits.json'
+            fixture=with_metadata(app.work.before);save_new(source,fixture)
+            with patch('ui.filedialog.askopenfilename',return_value=str(source)),patch('ui.messagebox.askyesno',return_value=True):app.open_file()
+            root.geometry('1180x812');root.update()
+            check('portrait-bearing file opens in GUI',metadata(app.work.after)==metadata(fixture))
+            check('GUI identifies preserved portraits',app.work.info['metadata']['portraits']==1)
+            panel=app.apply_button.master.master
+            check('apply footer fits inside panel with metadata notice',app.apply_button.winfo_rooty()+app.apply_button.winfo_height()<=panel.winfo_rooty()+panel.winfo_height())
+            out=Path(directory)/'synthetic-copy.json'
+            with patch('ui.filedialog.asksaveasfilename',return_value=str(out)):app.export()
+            check('GUI export preserves all metadata',metadata(load_json(out)[0])==metadata(fixture))
+            check('GUI import export leaves source intact',load_json(source)[0]==fixture)
         app.status.set('GUI検証完了: サンプル・編集・比較・別名保存・上書き拒否')
         Path('notes/gui-results.json').write_text(json.dumps({'passed':True,'checks':results,'python':sys.version},ensure_ascii=False,indent=2),encoding='utf8')
     except Exception as exc:
