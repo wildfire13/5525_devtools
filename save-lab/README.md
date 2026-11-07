@@ -60,7 +60,12 @@ Tkや画面のない環境では下記CLIを使ってください。
 
 作業ディレクトリをこのフォルダへ移して実行します。JSON出力、エラー時終了コード2です。
 
+最初に `python3 save_lab.py doctor` を実行すると、Python・SQLite・Node.jsと人工サンプルの公式保存/再読込を一括確認できます。実セーブや画面を開かず、設定変更・インストールを行いません。`ok: true` なら終了コード0、失敗時は終了コード2で `checks` の失敗段階・`code`・`next_steps` を返します。未実行の検証は `not_run` です。診断には実行パスが含まれるため、公開しないでください。
+
+GUIの起動確認は別に `node launch.cjs --diagnose`、このツールの版確認は `python3 save_lab.py --version` です。
+
 ```sh
+python3 save_lab.py doctor
 python3 save_lab.py sample --out fresh.json
 python3 save_lab.py validate fresh.json
 python3 save_lab.py inspect fresh.json
@@ -69,7 +74,7 @@ python3 save_lab.py edit fresh.json --patch examples/gold-and-growth.patch.json 
 python3 save_lab.py compare fresh.json trial.json --out comparison.json
 ```
 
-Windowsでは `python3` を診断で確認できたPython実体のパス（例: `"C:/Python313/python.exe"`）に置き換えます。壊れた既定版がある場合は `py -3` を使わないでください。出力先が存在する場合は失敗します。`--force` はありません。
+Windowsでは `python3` を診断で確認できたPython実体のパス（例: `"C:/Python313/python.exe"`）に置き換えます。壊れた既定版がある場合は `py -3` を使わないでください。自動処理でUTF-8のJSONとして受け取る場合は、Pythonの直後に `-X utf8` を付けます（例: `python -X utf8 save_lab.py doctor`）。出力先が存在する場合は失敗します。`--force` はありません。
 
 パッチは許可された項目だけを受け付けます。EXPに合わせてLv・スキルポイント・未配分能力ポイントを整合。未配分が負になる変更、HP/MP上限超過、装備条件違反、未知のキーを拒否します。
 
@@ -130,6 +135,8 @@ node tests/test_engine.cjs
 node tests/test_launcher.cjs
 node tests/test_metadata.cjs
 ```
+
+Windowsのsandboxなどでシンボリックリンク/ハードリンクのテスト用ファイルを作れない場合、その2項目だけが理由付きの `SKIP` になります。製品の上書き禁止処理は変えていません。リンク対応環境では実リンクを使う検証が実行され、通常ファイルと原本の上書き拒否・排他的な新規作成の検証はリンク権限に関係なく実行します。`SKIP` は合格扱いではなく、その環境で未検証という意味です。
 
 同梱公式テストは `vendor/5525/native` で実行可能。実施結果・GUI検証範囲は `notes/verification.md` を参照。
 
