@@ -1,0 +1,9 @@
+{
+  "gold": 1500,
+  "characters": {
+    "recruit-porter-human-male": {
+      "xp": 200,
+      "allocations": {"str": 2, "int": 0, "agi": 0}
+    }
+  }
+}

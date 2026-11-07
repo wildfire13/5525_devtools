@@ -1,0 +1,1485 @@
+{
+  "format": "5525-native-campaign",
+  "version": 1,
+  "state": {
+    "version": 1,
+    "phase": "battle",
+    "location": "astaris",
+    "gold": 188,
+    "xp": 20,
+    "level": 1,
+    "hours": 5,
+    "selected": [
+      "guard",
+      "archer",
+      "mage",
+      "scout",
+      "porter"
+    ],
+    "characters": {
+      "guard": {
+        "id": "guard",
+        "equipmentRevision": 2,
+        "leftHand": "guard-shield-wood",
+        "race": "human",
+        "weapon": "sword-wood",
+        "armor": "armor-cloth",
+        "hp": 180,
+        "mp": 4,
+        "xp": 20,
+        "level": 1,
+        "statPoints": 0,
+        "skillPoints": 0,
+        "allocations": {
+          "str": 0,
+          "int": 0,
+          "agi": 0
+        }
+      },
+      "guard-2": {
+        "id": "guard-2",
+        "equipmentRevision": 2,
+        "leftHand": "guard-shield-wood",
+        "race": "human",
+        "weapon": "sword-wood",
+        "armor": "armor-cloth",
+        "hp": 180,
+        "mp": 6,
+        "xp": 0,
+        "level": 1,
+        "statPoints": 0,
+        "skillPoints": 0,
+        "allocations": {
+          "str": 0,
+          "int": 0,
+          "agi": 0
+        }
+      },
+      "archer": {
+        "id": "archer",
+        "equipmentRevision": 2,
+        "race": "human",
+        "weapon": "bow-wood",
+        "armor": "armor-cloth",
+        "hp": 0,
+        "mp": 4,
+        "xp": 20,
+        "level": 1,
+        "statPoints": 0,
+        "skillPoints": 0,
+        "allocations": {
+          "str": 0,
+          "int": 0,
+          "agi": 0
+        }
+      },
+      "archer-2": {
+        "id": "archer-2",
+        "equipmentRevision": 2,
+        "race": "human",
+        "weapon": "bow-wood",
+        "armor": "armor-cloth",
+        "hp": 100,
+        "mp": 4,
+        "xp": 0,
+        "level": 1,
+        "statPoints": 0,
+        "skillPoints": 0,
+        "allocations": {
+          "str": 0,
+          "int": 0,
+          "agi": 0
+        }
+      },
+      "mage": {
+        "id": "mage",
+        "equipmentRevision": 2,
+        "race": "elf",
+        "weapon": "staff-wood",
+        "armor": "armor-cloth",
+        "hp": 100,
+        "mp": 2,
+        "xp": 20,
+        "level": 1,
+        "statPoints": 0,
+        "skillPoints": 0,
+        "allocations": {
+          "str": 0,
+          "int": 0,
+          "agi": 0
+        }
+      },
+      "mage-2": {
+        "id": "mage-2",
+        "equipmentRevision": 2,
+        "race": "elf",
+        "weapon": "staff-wood",
+        "armor": "armor-cloth",
+        "hp": 100,
+        "mp": 8,
+        "xp": 0,
+        "level": 1,
+        "statPoints": 0,
+        "skillPoints": 0,
+        "allocations": {
+          "str": 0,
+          "int": 0,
+          "agi": 0
+        }
+      },
+      "scout": {
+        "id": "scout",
+        "equipmentRevision": 2,
+        "race": "elf",
+        "weapon": "dagger-wood",
+        "armor": "armor-cloth",
+        "hp": 86,
+        "mp": 5,
+        "xp": 20,
+        "level": 1,
+        "statPoints": 0,
+        "skillPoints": 0,
+        "allocations": {
+          "str": 0,
+          "int": 0,
+          "agi": 0
+        }
+      },
+      "scout-2": {
+        "id": "scout-2",
+        "equipmentRevision": 2,
+        "race": "elf",
+        "weapon": "dagger-wood",
+        "armor": "armor-cloth",
+        "hp": 105,
+        "mp": 5,
+        "xp": 0,
+        "level": 1,
+        "statPoints": 0,
+        "skillPoints": 0,
+        "allocations": {
+          "str": 0,
+          "int": 0,
+          "agi": 0
+        }
+      },
+      "porter": {
+        "id": "porter",
+        "equipmentRevision": 2,
+        "race": "human",
+        "weapon": "porter-kit",
+        "armor": "armor-cloth",
+        "hp": 110,
+        "mp": 5,
+        "xp": 20,
+        "level": 1,
+        "statPoints": 0,
+        "skillPoints": 0,
+        "allocations": {
+          "str": 0,
+          "int": 0,
+          "agi": 0
+        }
+      },
+      "porter-2": {
+        "id": "porter-2",
+        "equipmentRevision": 2,
+        "race": "human",
+        "weapon": "porter-kit",
+        "armor": "armor-cloth",
+        "hp": 110,
+        "mp": 6,
+        "xp": 0,
+        "level": 1,
+        "statPoints": 0,
+        "skillPoints": 0,
+        "allocations": {
+          "str": 0,
+          "int": 0,
+          "agi": 0
+        }
+      },
+      "warrior": {
+        "id": "warrior",
+        "equipmentRevision": 2,
+        "race": "dwarf",
+        "weapon": "hammer-iron-1",
+        "armor": "armor-cloth",
+        "hp": 180,
+        "mp": 6,
+        "xp": 0,
+        "level": 1,
+        "statPoints": 0,
+        "skillPoints": 0,
+        "allocations": {
+          "str": 0,
+          "int": 0,
+          "agi": 0
+        }
+      }
+    },
+    "inventory": {
+      "potion": 1,
+      "ether": 1
+    },
+    "activeQuest": {
+      "id": "astaris-east-0-0",
+      "from": "astaris",
+      "to": "east",
+      "name": "イースへ、急ぎの鍛冶場の包帯（仮）",
+      "client": "鍛冶職人リタ（仮）",
+      "cargo": "鍛冶場の包帯",
+      "weight": 3,
+      "deadline": 6,
+      "reward": 180,
+      "xp": 100,
+      "text": "繰り返しの受注・移動・買い替えを確かめる仮の配達依頼です。急ぎは納期6時間・報酬180G、通常は10時間・150G。",
+      "token": 1
+    },
+    "journey": {
+      "phase": "battle",
+      "job": {
+        "id": "astaris-east-0-0",
+        "from": "astaris",
+        "to": "east",
+        "name": "イースへ、急ぎの鍛冶場の包帯（仮）",
+        "client": "鍛冶職人リタ（仮）",
+        "cargo": "鍛冶場の包帯",
+        "weight": 3,
+        "deadline": 6,
+        "reward": 180,
+        "xp": 100,
+        "text": "繰り返しの受注・移動・買い替えを確かめる仮の配達依頼です。急ぎは納期6時間・報酬180G、通常は10時間・150G。",
+        "token": 1
+      },
+      "hours": 5,
+      "gold": 0,
+      "xp": 0,
+      "level": 1,
+      "stage": 1,
+      "rested": false,
+      "kit": "campaign",
+      "formation": "convoy",
+      "selected": [
+        "guard",
+        "archer",
+        "mage",
+        "scout",
+        "porter"
+      ],
+      "party": [
+        {
+          "job": "guard",
+          "name": "ガロ",
+          "role": "盾役",
+          "icon": "盾",
+          "pos": 24,
+          "max": 180,
+          "atk": 26,
+          "agi": 10,
+          "reach": 1,
+          "mp": 4,
+          "image": "knight.png",
+          "id": "guard",
+          "side": "ally",
+          "hp": 180,
+          "maxMp": 6,
+          "skillStage": 1,
+          "next": 90,
+          "guard": false,
+          "cover": null,
+          "tie": 1,
+          "equippedSkill": "guard",
+          "attackWeapons": [
+            {
+              "slot": "rightHand",
+              "itemId": "sword-wood",
+              "name": "木製の護衛剣",
+              "atk": 26,
+              "reach": 1,
+              "skill": null
+            }
+          ],
+          "attackBonus": 0,
+          "activeSkills": [
+            "guard"
+          ],
+          "skillSources": [
+            {
+              "id": "guard",
+              "slot": "leftHand",
+              "itemId": "guard-shield-wood",
+              "classification": "active"
+            }
+          ],
+          "effects": [],
+          "canInvade": false,
+          "weapon": "sword",
+          "race": "human",
+          "str": 16,
+          "int": 8,
+          "equipment": {
+            "rightHand": "sword-wood",
+            "leftHand": "guard-shield-wood",
+            "head": "empty-head",
+            "upperBody": "armor-cloth",
+            "lowerBody": "empty-lowerBody",
+            "feet": "empty-feet",
+            "accessory1": "empty-accessory1",
+            "accessory2": "empty-accessory2"
+          },
+          "boost": false
+        },
+        {
+          "job": "archer",
+          "name": "リノ",
+          "role": "弓手",
+          "icon": "弓",
+          "pos": 13,
+          "max": 100,
+          "atk": 25,
+          "agi": 14,
+          "reach": 3,
+          "mp": 4,
+          "image": "archer.png",
+          "id": "archer",
+          "side": "ally",
+          "hp": 0,
+          "maxMp": 4,
+          "skillStage": 1,
+          "next": 28.571428571428573,
+          "guard": false,
+          "cover": null,
+          "tie": 4.01,
+          "equippedSkill": "archer",
+          "attackWeapons": [
+            {
+              "slot": "rightHand",
+              "itemId": "bow-wood",
+              "name": "木製の遠見弓",
+              "atk": 25,
+              "reach": 3,
+              "skill": "archer"
+            }
+          ],
+          "attackBonus": 0,
+          "activeSkills": [
+            "archer"
+          ],
+          "skillSources": [
+            {
+              "id": "archer",
+              "slot": "rightHand",
+              "itemId": "bow-wood",
+              "classification": "active"
+            }
+          ],
+          "effects": [],
+          "canInvade": false,
+          "weapon": "bow",
+          "race": "human",
+          "str": 12,
+          "int": 8,
+          "equipment": {
+            "rightHand": "bow-wood",
+            "leftHand": "empty-leftHand",
+            "head": "empty-head",
+            "upperBody": "armor-cloth",
+            "lowerBody": "empty-lowerBody",
+            "feet": "empty-feet",
+            "accessory1": "empty-accessory1",
+            "accessory2": "empty-accessory2"
+          },
+          "boost": false
+        },
+        {
+          "job": "mage",
+          "name": "ミオ",
+          "role": "ヒーラー",
+          "icon": "癒",
+          "pos": 34,
+          "max": 100,
+          "atk": 14,
+          "agi": 11,
+          "reach": 2,
+          "mp": 2,
+          "image": "healer.png",
+          "id": "mage",
+          "side": "ally",
+          "hp": 100,
+          "maxMp": 8,
+          "skillStage": 1,
+          "next": 90.90909090909092,
+          "guard": false,
+          "cover": null,
+          "tie": 9.02,
+          "equippedSkill": "mage",
+          "attackWeapons": [
+            {
+              "slot": "rightHand",
+              "itemId": "staff-wood",
+              "name": "木製の癒し杖",
+              "atk": 14,
+              "reach": 2,
+              "skill": "mage"
+            }
+          ],
+          "attackBonus": 0,
+          "activeSkills": [
+            "mage"
+          ],
+          "skillSources": [
+            {
+              "id": "mage",
+              "slot": "rightHand",
+              "itemId": "staff-wood",
+              "classification": "active"
+            }
+          ],
+          "effects": [],
+          "canInvade": false,
+          "weapon": "staff",
+          "race": "elf",
+          "str": 14,
+          "int": 16,
+          "equipment": {
+            "rightHand": "staff-wood",
+            "leftHand": "empty-leftHand",
+            "head": "empty-head",
+            "upperBody": "armor-cloth",
+            "lowerBody": "empty-lowerBody",
+            "feet": "empty-feet",
+            "accessory1": "empty-accessory1",
+            "accessory2": "empty-accessory2"
+          },
+          "boost": false
+        },
+        {
+          "job": "scout",
+          "name": "ニカ",
+          "role": "スカウト",
+          "icon": "斥",
+          "pos": 26,
+          "max": 105,
+          "atk": 23,
+          "agi": 13,
+          "reach": 1,
+          "mp": 5,
+          "image": "scout.png",
+          "id": "scout",
+          "side": "ally",
+          "hp": 86,
+          "maxMp": 5,
+          "skillStage": 1,
+          "next": 92.3076923076923,
+          "guard": false,
+          "cover": null,
+          "tie": 12.03,
+          "equippedSkill": "scout",
+          "attackWeapons": [
+            {
+              "slot": "rightHand",
+              "itemId": "dagger-wood",
+              "name": "木製の奇襲短剣",
+              "atk": 23,
+              "reach": 1,
+              "skill": "scout"
+            }
+          ],
+          "attackBonus": 0,
+          "activeSkills": [
+            "scout"
+          ],
+          "skillSources": [
+            {
+              "id": "scout",
+              "slot": "rightHand",
+              "itemId": "dagger-wood",
+              "classification": "active"
+            },
+            {
+              "id": "invasion",
+              "slot": "accessory1",
+              "itemId": "invasion-charm-1",
+              "classification": "passive"
+            }
+          ],
+          "effects": [
+            "invasion"
+          ],
+          "canInvade": true,
+          "weapon": "dagger",
+          "race": "elf",
+          "str": 10,
+          "int": 9,
+          "equipment": {
+            "rightHand": "dagger-wood",
+            "leftHand": "empty-leftHand",
+            "head": "empty-head",
+            "upperBody": "armor-cloth",
+            "lowerBody": "empty-lowerBody",
+            "feet": "empty-feet",
+            "accessory1": "invasion-charm-1",
+            "accessory2": "empty-accessory2"
+          },
+          "boost": false
+        },
+        {
+          "job": "porter",
+          "name": "トワ",
+          "role": "ポーター",
+          "icon": "運",
+          "pos": 22,
+          "max": 110,
+          "atk": 0,
+          "agi": 12,
+          "reach": 0,
+          "mp": 5,
+          "image": "porter.png",
+          "id": "porter",
+          "side": "ally",
+          "hp": 110,
+          "maxMp": 6,
+          "skillStage": 1,
+          "next": 91.66666666666666,
+          "guard": true,
+          "cover": null,
+          "tie": 17.04,
+          "equippedSkill": "porter",
+          "attackWeapons": [],
+          "attackBonus": 0,
+          "activeSkills": [
+            "porter"
+          ],
+          "skillSources": [
+            {
+              "id": "porter",
+              "slot": "rightHand",
+              "itemId": "porter-kit",
+              "classification": "active"
+            }
+          ],
+          "effects": [],
+          "canInvade": false,
+          "race": "human",
+          "str": 14,
+          "int": 10,
+          "equipment": {
+            "rightHand": "porter-kit",
+            "leftHand": "empty-leftHand",
+            "head": "empty-head",
+            "upperBody": "armor-cloth",
+            "lowerBody": "empty-lowerBody",
+            "feet": "empty-feet",
+            "accessory1": "empty-accessory1",
+            "accessory2": "empty-accessory2"
+          },
+          "boost": false
+        }
+      ],
+      "potions": 1,
+      "history": [
+        "1区間：峠の近道（2時間）。",
+        "戦闘を終えた（1時間・味方41行動）。",
+        "2区間：峠の近道（2時間）。"
+      ],
+      "outcome": null,
+      "origin": "astaris",
+      "destination": "east",
+      "token": 1,
+      "questless": false,
+      "route": "short"
+    },
+    "battle": {
+      "formationVersion": 1,
+      "formationKind": "convoy",
+      "units": [
+        {
+          "job": "guard",
+          "name": "ガロ",
+          "role": "盾役",
+          "icon": "盾",
+          "pos": 24,
+          "max": 180,
+          "atk": 26,
+          "agi": 10,
+          "reach": 1,
+          "mp": 4,
+          "image": "knight.png",
+          "id": "guard",
+          "side": "ally",
+          "hp": 0,
+          "maxMp": 6,
+          "skillStage": 1,
+          "next": 90,
+          "guard": false,
+          "cover": null,
+          "tie": 1,
+          "equippedSkill": "guard",
+          "attackWeapons": [
+            {
+              "slot": "rightHand",
+              "itemId": "sword-wood",
+              "name": "木製の護衛剣",
+              "atk": 26,
+              "reach": 1,
+              "skill": null
+            }
+          ],
+          "attackBonus": 0,
+          "activeSkills": [
+            "guard"
+          ],
+          "skillSources": [
+            {
+              "id": "guard",
+              "slot": "leftHand",
+              "itemId": "guard-shield-wood",
+              "classification": "active"
+            }
+          ],
+          "effects": [],
+          "canInvade": false,
+          "weapon": "sword",
+          "race": "human",
+          "str": 16,
+          "int": 8,
+          "equipment": {
+            "rightHand": "sword-wood",
+            "leftHand": "guard-shield-wood",
+            "head": "empty-head",
+            "upperBody": "armor-cloth",
+            "lowerBody": "empty-lowerBody",
+            "feet": "empty-feet",
+            "accessory1": "empty-accessory1",
+            "accessory2": "empty-accessory2"
+          },
+          "boost": false
+        },
+        {
+          "job": "archer",
+          "name": "リノ",
+          "role": "弓手",
+          "icon": "弓",
+          "pos": 13,
+          "max": 100,
+          "atk": 25,
+          "agi": 14,
+          "reach": 3,
+          "mp": 4,
+          "image": "archer.png",
+          "id": "archer",
+          "side": "ally",
+          "hp": 0,
+          "maxMp": 4,
+          "skillStage": 1,
+          "next": 7.142857142857143,
+          "guard": false,
+          "cover": null,
+          "tie": 4.01,
+          "equippedSkill": "archer",
+          "attackWeapons": [
+            {
+              "slot": "rightHand",
+              "itemId": "bow-wood",
+              "name": "木製の遠見弓",
+              "atk": 25,
+              "reach": 3,
+              "skill": "archer"
+            }
+          ],
+          "attackBonus": 0,
+          "activeSkills": [
+            "archer"
+          ],
+          "skillSources": [
+            {
+              "id": "archer",
+              "slot": "rightHand",
+              "itemId": "bow-wood",
+              "classification": "active"
+            }
+          ],
+          "effects": [],
+          "canInvade": false,
+          "weapon": "bow",
+          "race": "human",
+          "str": 12,
+          "int": 8,
+          "equipment": {
+            "rightHand": "bow-wood",
+            "leftHand": "empty-leftHand",
+            "head": "empty-head",
+            "upperBody": "armor-cloth",
+            "lowerBody": "empty-lowerBody",
+            "feet": "empty-feet",
+            "accessory1": "empty-accessory1",
+            "accessory2": "empty-accessory2"
+          }
+        },
+        {
+          "job": "mage",
+          "name": "ミオ",
+          "role": "ヒーラー",
+          "icon": "癒",
+          "pos": 33,
+          "max": 100,
+          "atk": 14,
+          "agi": 11,
+          "reach": 2,
+          "mp": 0,
+          "image": "healer.png",
+          "id": "mage",
+          "side": "ally",
+          "hp": 0,
+          "maxMp": 8,
+          "skillStage": 1,
+          "next": 181.81818181818184,
+          "guard": false,
+          "cover": null,
+          "tie": 9.02,
+          "equippedSkill": "mage",
+          "attackWeapons": [
+            {
+              "slot": "rightHand",
+              "itemId": "staff-wood",
+              "name": "木製の癒し杖",
+              "atk": 14,
+              "reach": 2,
+              "skill": "mage"
+            }
+          ],
+          "attackBonus": 0,
+          "activeSkills": [
+            "mage"
+          ],
+          "skillSources": [
+            {
+              "id": "mage",
+              "slot": "rightHand",
+              "itemId": "staff-wood",
+              "classification": "active"
+            }
+          ],
+          "effects": [],
+          "canInvade": false,
+          "weapon": "staff",
+          "race": "elf",
+          "str": 14,
+          "int": 16,
+          "equipment": {
+            "rightHand": "staff-wood",
+            "leftHand": "empty-leftHand",
+            "head": "empty-head",
+            "upperBody": "armor-cloth",
+            "lowerBody": "empty-lowerBody",
+            "feet": "empty-feet",
+            "accessory1": "empty-accessory1",
+            "accessory2": "empty-accessory2"
+          },
+          "boost": false
+        },
+        {
+          "job": "scout",
+          "name": "ニカ",
+          "role": "スカウト",
+          "icon": "斥",
+          "pos": 4,
+          "max": 105,
+          "atk": 23,
+          "agi": 13,
+          "reach": 1,
+          "mp": 5,
+          "image": "scout.png",
+          "id": "scout",
+          "side": "ally",
+          "hp": 0,
+          "maxMp": 5,
+          "skillStage": 1,
+          "next": 38.46153846153846,
+          "guard": false,
+          "cover": null,
+          "tie": 12.03,
+          "equippedSkill": "scout",
+          "attackWeapons": [
+            {
+              "slot": "rightHand",
+              "itemId": "dagger-wood",
+              "name": "木製の奇襲短剣",
+              "atk": 23,
+              "reach": 1,
+              "skill": "scout"
+            }
+          ],
+          "attackBonus": 0,
+          "activeSkills": [
+            "scout"
+          ],
+          "skillSources": [
+            {
+              "id": "scout",
+              "slot": "rightHand",
+              "itemId": "dagger-wood",
+              "classification": "active"
+            },
+            {
+              "id": "invasion",
+              "slot": "accessory1",
+              "itemId": "invasion-charm-1",
+              "classification": "passive"
+            }
+          ],
+          "effects": [
+            "invasion"
+          ],
+          "canInvade": true,
+          "weapon": "dagger",
+          "race": "elf",
+          "str": 10,
+          "int": 9,
+          "equipment": {
+            "rightHand": "dagger-wood",
+            "leftHand": "empty-leftHand",
+            "head": "empty-head",
+            "upperBody": "armor-cloth",
+            "lowerBody": "empty-lowerBody",
+            "feet": "empty-feet",
+            "accessory1": "invasion-charm-1",
+            "accessory2": "empty-accessory2"
+          },
+          "boost": false
+        },
+        {
+          "job": "porter",
+          "name": "トワ",
+          "role": "ポーター",
+          "icon": "運",
+          "pos": 22,
+          "max": 110,
+          "atk": 0,
+          "agi": 12,
+          "reach": 0,
+          "mp": 5,
+          "image": "porter.png",
+          "id": "porter",
+          "side": "ally",
+          "hp": 98,
+          "maxMp": 6,
+          "skillStage": 1,
+          "next": 183.33333333333337,
+          "guard": false,
+          "cover": null,
+          "tie": 17.04,
+          "equippedSkill": "porter",
+          "attackWeapons": [],
+          "attackBonus": 0,
+          "activeSkills": [
+            "porter"
+          ],
+          "skillSources": [
+            {
+              "id": "porter",
+              "slot": "rightHand",
+              "itemId": "porter-kit",
+              "classification": "active"
+            }
+          ],
+          "effects": [],
+          "canInvade": false,
+          "race": "human",
+          "str": 14,
+          "int": 10,
+          "equipment": {
+            "rightHand": "porter-kit",
+            "leftHand": "empty-leftHand",
+            "head": "empty-head",
+            "upperBody": "armor-cloth",
+            "lowerBody": "empty-lowerBody",
+            "feet": "empty-feet",
+            "accessory1": "empty-accessory1",
+            "accessory2": "empty-accessory2"
+          },
+          "boost": false
+        },
+        {
+          "job": "guard",
+          "name": "敵盾役 1",
+          "role": "盾役",
+          "icon": "盾",
+          "pos": 25,
+          "max": 180,
+          "atk": 26,
+          "agi": 10,
+          "reach": 1,
+          "mp": 1,
+          "image": "knight.png",
+          "id": "enemy-guard",
+          "side": "enemy",
+          "hp": 152,
+          "maxMp": 6,
+          "skillStage": 1,
+          "next": 190,
+          "guard": true,
+          "cover": null,
+          "tie": 0,
+          "intent": {
+            "kind": "guard",
+            "target": null,
+            "reason": "次の機会に備える",
+            "name": "防御",
+            "cells": []
+          },
+          "boost": false
+        },
+        {
+          "job": "mage",
+          "name": "敵ヒーラー 2",
+          "role": "ヒーラー",
+          "icon": "癒",
+          "pos": 35,
+          "max": 100,
+          "atk": 14,
+          "agi": 11,
+          "reach": 2,
+          "mp": 4,
+          "image": "healer.png",
+          "id": "enemy-mage",
+          "side": "enemy",
+          "hp": 100,
+          "maxMp": 8,
+          "skillStage": 1,
+          "next": 190.90909090909093,
+          "guard": false,
+          "cover": null,
+          "tie": 8.01,
+          "intent": {
+            "kind": "guard",
+            "target": null,
+            "reason": "次の機会に備える",
+            "name": "防御",
+            "cells": []
+          },
+          "boost": false
+        },
+        {
+          "job": "scout",
+          "name": "敵スカウト 3",
+          "role": "スカウト",
+          "icon": "斥",
+          "pos": 23,
+          "max": 105,
+          "atk": 23,
+          "agi": 13,
+          "reach": 1,
+          "mp": 0,
+          "image": "scout.png",
+          "id": "enemy-scout-2",
+          "side": "enemy",
+          "hp": 0,
+          "maxMp": 5,
+          "skillStage": 1,
+          "next": 76.92307692307692,
+          "guard": false,
+          "cover": null,
+          "tie": 13.02,
+          "intent": {
+            "kind": "attack",
+            "target": "guard",
+            "reason": "射程内の弱った敵を狙う",
+            "name": "攻撃",
+            "cells": [
+              24
+            ]
+          },
+          "boost": false
+        },
+        {
+          "job": "scout",
+          "name": "敵スカウト 4",
+          "role": "スカウト",
+          "icon": "斥",
+          "pos": 14,
+          "max": 105,
+          "atk": 23,
+          "agi": 13,
+          "reach": 1,
+          "mp": 5,
+          "image": "scout.png",
+          "id": "enemy-scout",
+          "side": "enemy",
+          "hp": 0,
+          "maxMp": 5,
+          "skillStage": 1,
+          "next": 53.84615384615385,
+          "guard": false,
+          "cover": null,
+          "tie": 13.03,
+          "intent": {
+            "kind": "attack",
+            "target": "guard",
+            "reason": "射程内の弱った敵を狙う",
+            "name": "攻撃",
+            "cells": [
+              24
+            ]
+          },
+          "boost": false
+        }
+      ],
+      "actor": "porter",
+      "result": null,
+      "potions": {
+        "ally": 0,
+        "enemy": 0
+      },
+      "log": [
+        "荷物を守り、街道を切り抜けよう。",
+        "ニカの攻撃 → 敵スカウト 3",
+        "敵スカウト 3に17ダメージ",
+        "敵スカウト 3の奇襲 → ニカ",
+        "ニカに35ダメージ",
+        "敵スカウト 4が味方陣へ移動。",
+        "トワは防御。",
+        "敵ヒーラー 2が敵陣へ移動。",
+        "ミオの攻撃 → 敵ヒーラー 2",
+        "敵ヒーラー 2に14ダメージ",
+        "敵盾役 1の攻撃 → ガロ",
+        "ガロに26ダメージ",
+        "ガロの攻撃 → 敵スカウト 4",
+        "敵スカウト 4に26ダメージ",
+        "ニカの攻撃 → 敵スカウト 3",
+        "敵スカウト 3に23ダメージ",
+        "敵スカウト 3の奇襲 → ニカ",
+        "ニカに23ダメージ",
+        "敵スカウト 4の攻撃 → ニカ",
+        "ニカに23ダメージ",
+        "トワの回復薬：ニカのHP＋55",
+        "敵ヒーラー 2の攻撃 → ミオ",
+        "ミオに14ダメージ",
+        "ミオの攻撃 → 敵ヒーラー 2",
+        "敵ヒーラー 2に14ダメージ",
+        "敵盾役 1の攻撃 → ガロ",
+        "ガロに26ダメージ",
+        "ガロの攻撃 → 敵スカウト 4",
+        "敵スカウト 4に26ダメージ",
+        "ニカの攻撃 → 敵スカウト 3",
+        "敵スカウト 3に23ダメージ",
+        "敵スカウト 3の奇襲 → ニカ",
+        "ニカに23ダメージ",
+        "敵スカウト 4の攻撃 → ニカ",
+        "ニカに23ダメージ",
+        "トワは防御。",
+        "敵ヒーラー 2の攻撃 → ミオ",
+        "ミオに14ダメージ",
+        "ミオのヒール：ガロのHP＋52",
+        "敵盾役 1の攻撃 → ガロ",
+        "ガロに26ダメージ",
+        "ガロの攻撃 → 敵スカウト 4",
+        "敵スカウト 4に26ダメージ",
+        "ニカの攻撃 → 敵スカウト 3",
+        "敵スカウト 3に23ダメージ",
+        "敵スカウト 3の奇襲 → ニカ",
+        "ニカに23ダメージ・戦闘不能",
+        "敵スカウト 4の攻撃は空振り。",
+        "トワは防御。",
+        "敵ヒーラー 2の攻撃 → ミオ",
+        "ミオに14ダメージ",
+        "ミオのヒール：ミオのHP＋42",
+        "敵スカウト 3の回復薬：敵スカウト 3のHP＋55",
+        "敵スカウト 4の回復薬は対象・経路が無効になり見送り。",
+        "敵盾役 1の攻撃 → ガロ",
+        "ガロに26ダメージ",
+        "ガロの攻撃 → 敵スカウト 4",
+        "敵スカウト 4に26ダメージ",
+        "トワは防御。",
+        "敵ヒーラー 2の回復薬は対象・経路が無効になり見送り。",
+        "ミオの攻撃 → 敵ヒーラー 2",
+        "敵ヒーラー 2に14ダメージ",
+        "敵スカウト 3が味方陣へ移動。",
+        "敵スカウト 4の攻撃 → ガロ",
+        "ガロに23ダメージ",
+        "敵盾役 1の攻撃 → ガロ",
+        "ガロに26ダメージ",
+        "ガロの攻撃 → 敵スカウト 4",
+        "敵スカウト 4に26ダメージ・戦闘不能",
+        "トワは防御。",
+        "敵スカウト 3が味方陣へ移動。",
+        "敵ヒーラー 2の攻撃 → ミオ",
+        "ミオに14ダメージ",
+        "ミオの攻撃 → 敵ヒーラー 2",
+        "敵ヒーラー 2に14ダメージ",
+        "トワは防御。",
+        "敵盾役 1は次の自分の番まで敵ヒーラー 2をかばう。",
+        "ガロの攻撃 → 敵スカウト 3",
+        "敵スカウト 3に26ダメージ",
+        "敵スカウト 3の奇襲 → トワ",
+        "トワに12ダメージ",
+        "敵ヒーラー 2のヒール：敵ヒーラー 2のHP＋56",
+        "ミオの攻撃 → 敵スカウト 3",
+        "敵スカウト 3に14ダメージ",
+        "トワは防御。",
+        "敵スカウト 3の攻撃 → ガロ",
+        "ガロに23ダメージ",
+        "敵盾役 1は次の自分の番まで敵ヒーラー 2をかばう。",
+        "ガロの攻撃 → 敵スカウト 3",
+        "敵スカウト 3に26ダメージ",
+        "敵ヒーラー 2の攻撃 → ガロ",
+        "ガロに14ダメージ",
+        "ミオの攻撃 → 敵スカウト 3",
+        "敵スカウト 3に14ダメージ・戦闘不能",
+        "トワは防御。",
+        "敵盾役 1の攻撃 → ガロ",
+        "ガロに26ダメージ",
+        "ガロの攻撃 → 敵盾役 1",
+        "敵盾役 1に26ダメージ",
+        "敵ヒーラー 2の攻撃 → ガロ",
+        "ガロに14ダメージ",
+        "ミオの攻撃 → 敵ヒーラー 2",
+        "敵ヒーラー 2に14ダメージ",
+        "トワは防御。",
+        "敵盾役 1の攻撃 → ガロ",
+        "ガロに26ダメージ・戦闘不能",
+        "敵ヒーラー 2の攻撃は空振り。",
+        "ミオの攻撃 → 敵ヒーラー 2",
+        "敵ヒーラー 2に14ダメージ",
+        "トワは防御。",
+        "トワは防御。",
+        "敵盾役 1は防御。",
+        "敵ヒーラー 2の攻撃 → ミオ",
+        "ミオに14ダメージ",
+        "ミオの攻撃 → 敵ヒーラー 2",
+        "敵ヒーラー 2に14ダメージ",
+        "トワは防御。",
+        "敵ヒーラー 2の攻撃 → ミオ",
+        "ミオに14ダメージ",
+        "ミオの攻撃 → 敵ヒーラー 2",
+        "敵ヒーラー 2に14ダメージ",
+        "敵盾役 1は防御。",
+        "トワは防御。",
+        "敵ヒーラー 2のヒール：敵ヒーラー 2のHP＋56",
+        "ミオの攻撃 → 敵ヒーラー 2",
+        "敵ヒーラー 2に14ダメージ",
+        "敵盾役 1は次の自分の番まで敵ヒーラー 2をかばう。",
+        "トワは防御。",
+        "敵ヒーラー 2の攻撃 → ミオ",
+        "ミオに14ダメージ",
+        "ミオの攻撃 → 敵ヒーラー 2",
+        "敵盾役 1が敵ヒーラー 2をかばう：敵盾役 1に14ダメージ",
+        "敵盾役 1は防御。",
+        "トワは防御。",
+        "敵ヒーラー 2の攻撃 → ミオ",
+        "ミオに14ダメージ",
+        "ミオの攻撃 → 敵ヒーラー 2",
+        "敵ヒーラー 2に14ダメージ",
+        "敵盾役 1は防御。",
+        "トワは防御。",
+        "敵ヒーラー 2のヒール：敵盾役 1のHP＋40",
+        "ミオの攻撃 → 敵ヒーラー 2",
+        "敵ヒーラー 2に14ダメージ",
+        "トワは防御。",
+        "敵盾役 1は防御。",
+        "敵ヒーラー 2の攻撃 → ミオ",
+        "ミオに14ダメージ",
+        "ミオの攻撃 → 敵ヒーラー 2",
+        "敵ヒーラー 2に14ダメージ",
+        "トワは防御。",
+        "敵盾役 1は次の自分の番まで敵ヒーラー 2をかばう。",
+        "敵ヒーラー 2のヒール：敵ヒーラー 2のHP＋56",
+        "ミオの攻撃 → 敵ヒーラー 2",
+        "敵盾役 1が敵ヒーラー 2をかばう：敵盾役 1に14ダメージ",
+        "トワは防御。",
+        "敵盾役 1は次の自分の番まで敵ヒーラー 2をかばう。",
+        "敵ヒーラー 2の攻撃 → ミオ",
+        "ミオに14ダメージ",
+        "ミオの攻撃 → 敵ヒーラー 2",
+        "敵盾役 1が敵ヒーラー 2をかばう：敵盾役 1に14ダメージ",
+        "トワは防御。",
+        "敵盾役 1は防御。",
+        "敵ヒーラー 2の攻撃 → ミオ",
+        "ミオに14ダメージ・戦闘不能"
+      ],
+      "actions": 52,
+      "recentEnemies": [
+        {
+          "name": "敵盾役 1",
+          "action": "防御"
+        },
+        {
+          "name": "敵ヒーラー 2",
+          "action": "攻撃"
+        }
+      ],
+      "ethers": 1,
+      "deploying": false,
+      "campaignToken": 1,
+      "campaignStage": 1,
+      "deploymentInitial": [
+        {
+          "id": "guard",
+          "pos": 24
+        },
+        {
+          "id": "archer",
+          "pos": 13
+        },
+        {
+          "id": "mage",
+          "pos": 33
+        },
+        {
+          "id": "scout",
+          "pos": 4
+        },
+        {
+          "id": "porter",
+          "pos": 22
+        }
+      ]
+    },
+    "rollback": {
+      "version": 1,
+      "phase": "town",
+      "location": "astaris",
+      "gold": 180,
+      "xp": 0,
+      "level": 1,
+      "hours": 0,
+      "selected": [
+        "guard",
+        "archer",
+        "mage",
+        "scout",
+        "porter"
+      ],
+      "characters": {
+        "guard": {
+          "id": "guard",
+          "equipmentRevision": 2,
+          "leftHand": "guard-shield-wood",
+          "race": "human",
+          "weapon": "sword-wood",
+          "armor": "armor-cloth",
+          "hp": 180,
+          "mp": 6,
+          "xp": 0,
+          "level": 1,
+          "statPoints": 0,
+          "skillPoints": 0,
+          "allocations": {
+            "str": 0,
+            "int": 0,
+            "agi": 0
+          }
+        },
+        "guard-2": {
+          "id": "guard-2",
+          "equipmentRevision": 2,
+          "leftHand": "guard-shield-wood",
+          "race": "human",
+          "weapon": "sword-wood",
+          "armor": "armor-cloth",
+          "hp": 180,
+          "mp": 6,
+          "xp": 0,
+          "level": 1,
+          "statPoints": 0,
+          "skillPoints": 0,
+          "allocations": {
+            "str": 0,
+            "int": 0,
+            "agi": 0
+          }
+        },
+        "archer": {
+          "id": "archer",
+          "equipmentRevision": 2,
+          "race": "human",
+          "weapon": "bow-wood",
+          "armor": "armor-cloth",
+          "hp": 100,
+          "mp": 4,
+          "xp": 0,
+          "level": 1,
+          "statPoints": 0,
+          "skillPoints": 0,
+          "allocations": {
+            "str": 0,
+            "int": 0,
+            "agi": 0
+          }
+        },
+        "archer-2": {
+          "id": "archer-2",
+          "equipmentRevision": 2,
+          "race": "human",
+          "weapon": "bow-wood",
+          "armor": "armor-cloth",
+          "hp": 100,
+          "mp": 4,
+          "xp": 0,
+          "level": 1,
+          "statPoints": 0,
+          "skillPoints": 0,
+          "allocations": {
+            "str": 0,
+            "int": 0,
+            "agi": 0
+          }
+        },
+        "mage": {
+          "id": "mage",
+          "equipmentRevision": 2,
+          "race": "elf",
+          "weapon": "staff-wood",
+          "armor": "armor-cloth",
+          "hp": 100,
+          "mp": 8,
+          "xp": 0,
+          "level": 1,
+          "statPoints": 0,
+          "skillPoints": 0,
+          "allocations": {
+            "str": 0,
+            "int": 0,
+            "agi": 0
+          }
+        },
+        "mage-2": {
+          "id": "mage-2",
+          "equipmentRevision": 2,
+          "race": "elf",
+          "weapon": "staff-wood",
+          "armor": "armor-cloth",
+          "hp": 100,
+          "mp": 8,
+          "xp": 0,
+          "level": 1,
+          "statPoints": 0,
+          "skillPoints": 0,
+          "allocations": {
+            "str": 0,
+            "int": 0,
+            "agi": 0
+          }
+        },
+        "scout": {
+          "id": "scout",
+          "equipmentRevision": 2,
+          "race": "elf",
+          "weapon": "dagger-wood",
+          "armor": "armor-cloth",
+          "hp": 105,
+          "mp": 5,
+          "xp": 0,
+          "level": 1,
+          "statPoints": 0,
+          "skillPoints": 0,
+          "allocations": {
+            "str": 0,
+            "int": 0,
+            "agi": 0
+          }
+        },
+        "scout-2": {
+          "id": "scout-2",
+          "equipmentRevision": 2,
+          "race": "elf",
+          "weapon": "dagger-wood",
+          "armor": "armor-cloth",
+          "hp": 105,
+          "mp": 5,
+          "xp": 0,
+          "level": 1,
+          "statPoints": 0,
+          "skillPoints": 0,
+          "allocations": {
+            "str": 0,
+            "int": 0,
+            "agi": 0
+          }
+        },
+        "porter": {
+          "id": "porter",
+          "equipmentRevision": 2,
+          "race": "human",
+          "weapon": "porter-kit",
+          "armor": "armor-cloth",
+          "hp": 110,
+          "mp": 6,
+          "xp": 0,
+          "level": 1,
+          "statPoints": 0,
+          "skillPoints": 0,
+          "allocations": {
+            "str": 0,
+            "int": 0,
+            "agi": 0
+          }
+        },
+        "porter-2": {
+          "id": "porter-2",
+          "equipmentRevision": 2,
+          "race": "human",
+          "weapon": "porter-kit",
+          "armor": "armor-cloth",
+          "hp": 110,
+          "mp": 6,
+          "xp": 0,
+          "level": 1,
+          "statPoints": 0,
+          "skillPoints": 0,
+          "allocations": {
+            "str": 0,
+            "int": 0,
+            "agi": 0
+          }
+        },
+        "warrior": {
+          "id": "warrior",
+          "equipmentRevision": 2,
+          "race": "dwarf",
+          "weapon": "hammer-iron-1",
+          "armor": "armor-cloth",
+          "hp": 180,
+          "mp": 6,
+          "xp": 0,
+          "level": 1,
+          "statPoints": 0,
+          "skillPoints": 0,
+          "allocations": {
+            "str": 0,
+            "int": 0,
+            "agi": 0
+          }
+        }
+      },
+      "inventory": {
+        "potion": 3,
+        "ether": 1
+      },
+      "activeQuest": null,
+      "journey": null,
+      "battle": null,
+      "rollback": null,
+      "sequence": 0,
+      "boardRound": 0,
+      "completed": 0,
+      "result": null,
+      "history": [
+        "アスタリスに到着。繰り返し遊べる試作を開始。"
+      ]
+    },
+    "sequence": 1,
+    "boardRound": 0,
+    "completed": 0,
+    "result": null,
+    "history": [
+      "アスタリスに到着。繰り返し遊べる試作を開始。",
+      "イースへ、急ぎの鍛冶場の包帯（仮）を受注。",
+      "イースへ出発。",
+      "1区間目：近道で遭遇。",
+      "戦闘勝利：戦闘EXP＋20・戦利品8G（配達報酬とは別）。",
+      "2区間目：近道で遭遇。"
+    ]
+  }
+}
