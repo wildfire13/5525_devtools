@@ -7,6 +7,7 @@ const E=require('./vendor/5525/native/equipment-skills.js');
 const {isDeepStrictEqual}=require('node:util');
 const Envelope=require('./metadata-envelope.cjs');
 const Timeline=require('./quest-timeline.cjs');
+const QA=require('./qa-fixtures.cjs');
 const sourceSha='22e0b190ec0bb88d9438ef19487e587cd7e82b95';
 const fail=m=>{throw new Error(m)};
 function record(v,label){if(!v||typeof v!=='object'||Array.isArray(v)||Object.getPrototypeOf(v)!==Object.prototype)fail(label+' must be an object');}
@@ -68,9 +69,9 @@ function compare(before,after){
 }
 function run(r){
  record(r,'request');
- const allowed={new:['cmd'],catalog:['cmd'],normalize:['cmd','save'],inspect:['cmd','save'],edit:['cmd','save','patch'],compare:['cmd','before','after'],timeline:['cmd','save','options']};
+ const allowed={new:['cmd'],catalog:['cmd'],normalize:['cmd','save'],inspect:['cmd','save'],edit:['cmd','save','patch'],compare:['cmd','before','after'],timeline:['cmd','save','options'],boundaries:['cmd','save','options'],'qa-catalog':['cmd'],'qa-fixtures':['cmd','options']};
  if(!Object.hasOwn(allowed,r.cmd))fail('Unsupported command');
  keys(r,allowed[r.cmd],'request');
- switch(r.cmd){case 'timeline':return Timeline.timeline(r.save,r.options);case 'new':return checked(C.create());case 'catalog':return {sourceSha,gear:C.gear.map(g=>({...g,allowedSlots:S.allowed(g)})),slots:S.slots,characters:B.roster.map(({id,name,job})=>({id,name,job}))};case 'normalize':{const parts=Envelope.split(r.save),save=checked(C.deserialize(parts.core),parts.extras),original=parts.original;const migrated=!isDeepStrictEqual(original,save);return {save,migrated,warnings:migrated?['読込時に公式移行を適用。原本Aは移行後を比較基準にしています。元ファイルは未変更']:[]};}case 'inspect':return inspectEnvelope(r.save);case 'edit':return edit(r.save,r.patch);case 'compare':return compare(r.before,r.after);default:fail('Unsupported command');}}
+ switch(r.cmd){case 'boundaries':return Timeline.boundaryComparison(r.save,r.options);case 'qa-catalog':return QA.catalog();case 'qa-fixtures':return QA.fixtures(r.options);case 'timeline':return Timeline.timeline(r.save,r.options);case 'new':return checked(C.create());case 'catalog':return {sourceSha,gear:C.gear.map(g=>({...g,allowedSlots:S.allowed(g)})),slots:S.slots,characters:B.roster.map(({id,name,job})=>({id,name,job}))};case 'normalize':{const parts=Envelope.split(r.save),save=checked(C.deserialize(parts.core),parts.extras),original=parts.original;const migrated=!isDeepStrictEqual(original,save);return {save,migrated,warnings:migrated?['読込時に公式移行を適用。原本Aは移行後を比較基準にしています。元ファイルは未変更']:[]};}case 'inspect':return inspectEnvelope(r.save);case 'edit':return edit(r.save,r.patch);case 'compare':return compare(r.before,r.after);default:fail('Unsupported command');}}
 module.exports={run,sourceSha};
 if(require.main===module)require('node:readline').createInterface({input:process.stdin}).on('line',line=>{try{if(Buffer.byteLength(line)>4*C.MAX_SAVE_BYTES)fail('Request is too large');console.log(JSON.stringify({ok:true,result:run(JSON.parse(line))}));}catch(e){console.log(JSON.stringify({ok:false,error:e.message}));}});

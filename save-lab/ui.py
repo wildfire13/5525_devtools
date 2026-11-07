@@ -5,7 +5,8 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, font
 from pathlib import Path
 from timeline_ui import TimelinePanel
-from save_lab import Workspace, LabError, engine, save_new, configured_save_directory
+from qa_ui import QAPanel
+from save_lab import Workspace, LabError, engine, save_new, configured_save_directory, TOOL_VERSION
 
 BG = '#f4f4f5'
 INK = '#202124'
@@ -25,7 +26,7 @@ class App:
         self.gear = {x['id']: x for x in self.catalog['gear']}
         self.refreshing = False
         self.form_dirty = False
-        self.root.title('5525 セーブ管理室 | ローカル試作')
+        self.root.title(f'5525 セーブ管理室 v{TOOL_VERSION} | 固定参照 {self.catalog["sourceSha"][:8]}')
         self.root.geometry('1320x900')
         self.root.minsize(1000, 720)
         self.root.configure(bg=BG)
@@ -65,7 +66,7 @@ class App:
         outer = ttk.Frame(self.root, padding=16); outer.pack(fill='both', expand=True)
         top = ttk.Frame(outer); top.pack(fill='x')
         ttk.Label(top, text='5525 セーブ管理室', style='Title.TLabel').pack(side='left')
-        ttk.Label(top, text='ローカル専用  /  原本保護', style='Muted.TLabel').pack(side='left', padx=24)
+        ttk.Label(top, text=f'v{TOOL_VERSION}  /  原本保護  /  固定参照 {self.catalog["sourceSha"][:8]}', style='Muted.TLabel').pack(side='left', padx=24)
         self.export_button = ttk.Button(top, text='Bを別名保存', style='Accent.TButton', command=self.export, state='disabled'); self.export_button.pack(side='right')
         tools = ttk.Frame(outer); tools.pack(fill='x', pady=(16, 12))
         ttk.Button(tools, text='セーブを開く', command=self.open_file).pack(side='left')
@@ -85,7 +86,7 @@ class App:
         edit = ttk.Frame(self.tabs, padding=16)
         compare = ttk.Frame(self.tabs, padding=16)
         raw = ttk.Frame(self.tabs, padding=16)
-        self.tabs.add(edit, text='① 状態を作る'); self.tabs.add(compare, text='② 装備・スキルを比べる'); self.timeline = TimelinePanel(self.tabs, self); self.tabs.add(self.timeline.frame, text='③ クエスト時間・条件'); self.tabs.add(raw, text='変更内容')
+        self.tabs.add(edit, text='① 状態を作る'); self.tabs.add(compare, text='② 装備・スキルを比べる'); self.timeline = TimelinePanel(self.tabs, self); self.tabs.add(self.timeline.frame, text='③ クエスト時間・条件'); self.qa = QAPanel(self.tabs, self); self.tabs.add(self.qa.frame, text='④ 人工QA'); self.tabs.add(raw, text='変更内容')
         edit.columnconfigure(0, weight=1); edit.columnconfigure(1, weight=1); edit.rowconfigure(1, weight=1)
         global_bar = ttk.Frame(edit); global_bar.grid(row=0, column=0, columnspan=2, sticky='ew', pady=(0, 12))
         ttk.Label(global_bar, text='作業Bの所持金').pack(side='left')
@@ -95,7 +96,7 @@ class App:
         ttk.Label(left, text='メンバー', style='Sub.TLabel').pack(anchor='w', pady=(0, 8))
         self.members = self.tree(left, [('name', '名前', 130), ('level', 'Lv', 50), ('hp', 'HP', 90), ('atk', '攻撃', 60), ('reach', '射程', 60)], height=9)
         self.members.bind('<<TreeviewSelect>>', self.select_member)
-        ttk.Label(left, text='数値は現行ゲームの公式計算\n自由なスキル付与や戦闘勝率の予測は行いません', style='Muted.TLabel', wraplength=380).pack(anchor='w', pady=16)
+        ttk.Label(left, text='数値は固定参照版の公式計算\n自由なスキル付与や戦闘勝率の予測は行いません', style='Muted.TLabel', wraplength=380).pack(anchor='w', pady=16)
         right = ttk.Frame(edit); right.grid(row=1, column=1, sticky='nsew')
         self.member_title = tk.StringVar(value='メンバーを選択')
         ttk.Label(right, textvariable=self.member_title, style='Sub.TLabel').pack(anchor='w', pady=(0, 8))
