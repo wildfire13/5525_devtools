@@ -4,6 +4,7 @@ import json
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, font
 from pathlib import Path
+from timeline_ui import TimelinePanel
 from save_lab import Workspace, LabError, engine, save_new, configured_save_directory
 
 BG = '#f4f4f5'
@@ -72,18 +73,19 @@ class App:
         self.undo_button = ttk.Button(tools, text='ひとつ戻す', command=self.undo, state='disabled'); self.undo_button.pack(side='left', padx=(16, 8))
         self.reset_button = ttk.Button(tools, text='Aからやり直す', command=self.reset, state='disabled'); self.reset_button.pack(side='left')
         self.source = tk.StringVar(value='原本A  未読込')
-        ttk.Label(outer, textvariable=self.source, style='Muted.TLabel', wraplength=1180).pack(anchor='w')
+        self.source_label = ttk.Label(outer, textvariable=self.source, style='Muted.TLabel', wraplength=1180); self.source_label.pack(anchor='w')
         self.summary = tk.StringVar(value='セーブの状態・メンバー・装備を読み込み後に表示します')
-        ttk.Label(outer, textvariable=self.summary, style='Sub.TLabel').pack(anchor='w', pady=(12, 12))
+        self.summary_label = ttk.Label(outer, textvariable=self.summary, style='Sub.TLabel', wraplength=1180); self.summary_label.pack(anchor='w', pady=(12, 12))
         self.notice = tk.StringVar(value='編集できるのは街・未受注の状態です。移動中・戦闘中は確認と比較のみ')
-        ttk.Label(outer, textvariable=self.notice, style='Muted.TLabel', wraplength=1180).pack(anchor='w', pady=(0, 16))
+        self.notice_label = ttk.Label(outer, textvariable=self.notice, style='Muted.TLabel', wraplength=1180); self.notice_label.pack(anchor='w', pady=(0, 16))
         self.status = tk.StringVar()
-        ttk.Label(outer, textvariable=self.status, style='Muted.TLabel', wraplength=1100).pack(side='bottom', anchor='w', pady=(12, 0))
+        self.status_label = ttk.Label(outer, textvariable=self.status, style='Muted.TLabel', wraplength=1100); self.status_label.pack(side='bottom', anchor='w', pady=(12, 0))
+        outer.bind('<Configure>', lambda event: [label.configure(wraplength=max(240, event.width-32)) for label in (self.source_label, self.summary_label, self.notice_label, self.status_label)])
         self.tabs = ttk.Notebook(outer); self.tabs.pack(fill='both', expand=True)
         edit = ttk.Frame(self.tabs, padding=16)
         compare = ttk.Frame(self.tabs, padding=16)
         raw = ttk.Frame(self.tabs, padding=16)
-        self.tabs.add(edit, text='① 状態を作る'); self.tabs.add(compare, text='② 装備・スキルを比べる'); self.tabs.add(raw, text='変更内容')
+        self.tabs.add(edit, text='① 状態を作る'); self.tabs.add(compare, text='② 装備・スキルを比べる'); self.timeline = TimelinePanel(self.tabs, self); self.tabs.add(self.timeline.frame, text='③ クエスト時間・条件'); self.tabs.add(raw, text='変更内容')
         edit.columnconfigure(0, weight=1); edit.columnconfigure(1, weight=1); edit.rowconfigure(1, weight=1)
         global_bar = ttk.Frame(edit); global_bar.grid(row=0, column=0, columnspan=2, sticky='ew', pady=(0, 12))
         ttk.Label(global_bar, text='作業Bの所持金').pack(side='left')
@@ -206,6 +208,7 @@ class App:
         self.undo_button.configure(state='normal' if self.work.undo_stack else 'disabled')
         self.reset_button.configure(state='normal' if self.work.undo_stack else 'disabled')
         self.refresh_compare()
+        self.timeline.invalidate()
         self.form_dirty = False; self.refreshing = False
 
     def select_member(self, _=None):

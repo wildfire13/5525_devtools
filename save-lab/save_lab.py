@@ -14,7 +14,7 @@ from contextlib import closing
 
 ROOT = Path(__file__).resolve().parent
 MAX_BYTES = 1024 * 1024
-TOOL_VERSION = '0.1.3'
+TOOL_VERSION = '0.2.0'
 
 class LabError(ValueError):
     pass
@@ -268,6 +268,10 @@ def main(argv=None):
     p.add_argument('save'); p.add_argument('--patch', required=True); p.add_argument('--out', required=True)
     p = sub.add_parser('compare')
     p.add_argument('before'); p.add_argument('after'); p.add_argument('--out')
+    p = sub.add_parser('timeline', help='独立コピーでクエスト時間・条件を検証しJSON表示')
+    p.add_argument('save'); p.add_argument('--quest', dest='questId'); p.add_argument('--carrier', dest='carrierId')
+    p.add_argument('--destination'); p.add_argument('--advance-hours', type=int, default=0)
+    p.add_argument('--out', help='検証レポートの別名保存。セーブは出力しません')
     args = parser.parse_args(argv)
     try:
         if args.command in (None, 'gui'):
@@ -294,6 +298,14 @@ def main(argv=None):
             work = Workspace(); work.open(args.save)
             patch, _ = load_json(args.patch); work.apply(patch)
             result = {'saved': work.export(args.out), 'comparison': work.compare(), 'source_sha256': work.source_hash}
+        elif args.command == 'timeline':
+            save, digest = load_json(args.save)
+            options = {k: getattr(args, k) for k in ('questId', 'carrierId', 'destination') if getattr(args, k)}
+            options['advanceHours'] = args.advance_hours
+            result = engine('timeline', save=save, options=options)
+            result['source_sha256'] = digest
+            if args.out:
+                save_new(args.out, result)
         elif args.command == 'compare':
             before, _ = load_json(args.before); after, _ = load_json(args.after)
             result = engine('compare', before=before, after=after)

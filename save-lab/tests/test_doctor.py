@@ -54,7 +54,7 @@ class Doctor(unittest.TestCase):
     def assert_report(self, report, ok):
         self.assertEqual(report['schema_version'], 1)
         self.assertEqual(report['tool'], '5525 Save Lab')
-        self.assertEqual(report['version'], '0.1.3')
+        self.assertEqual(report['version'], save_lab.TOOL_VERSION)
         self.assertIs(report['ok'], ok)
         self.assertEqual({item['name'] for item in report['checks']}, self.CHECK_NAMES)
         self.assertEqual(len(report['checks']), len(self.CHECK_NAMES))
@@ -102,7 +102,7 @@ class Doctor(unittest.TestCase):
         self.assert_report(json.loads(result.stdout), True)
 
     def test_real_cli_version_does_not_require_node(self):
-        self.assertEqual(save_lab.TOOL_VERSION, '0.1.3')
+        self.assertEqual(save_lab.TOOL_VERSION, '0.2.0')
         env = os.environ.copy()
         env['SAVE_LAB_NODE'] = 'not-an-installed-node-executable'
         env['PYTHONDONTWRITEBYTECODE'] = '1'
@@ -111,7 +111,7 @@ class Doctor(unittest.TestCase):
             env=env, capture_output=True, text=True, encoding='utf-8', timeout=10,
         )
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout.strip(), '5525 Save Lab 0.1.3')
+        self.assertEqual(result.stdout.strip(), f'5525 Save Lab {save_lab.TOOL_VERSION}')
         self.assertEqual(result.stderr, '')
 
     def test_successful_cli_report_and_official_roundtrip_order(self):
