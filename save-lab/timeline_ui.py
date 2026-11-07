@@ -19,6 +19,7 @@ class TimelinePanel:
         self.app = app
         self.frozen = None
         self.report = None
+        self.boundary_report = None
         self.quest_ids = {'受注中の依頼 / 未受注のまま': None}
         self.destination_ids = {'現在地で確認': None}
         self.carrier_ids = {'自動選択': None}
@@ -57,6 +58,9 @@ class TimelinePanel:
         self.advance_entry = ttk.Entry(time_row, textvariable=self.advance, width=9, state='disabled'); self.advance_entry.pack(side='left')
         ttk.Label(time_row, text='時間  /  コピーの現在時刻に加算', style='Muted.TLabel').pack(side='left', padx=8)
         self.run_button = ttk.Button(time_row, text='条件を検証', command=self.run, state='disabled'); self.run_button.pack(side='right')
+        boundary_actions = ttk.Frame(self.body); boundary_actions.pack(fill='x', pady=(0, 12))
+        self.boundary_button = ttk.Button(boundary_actions, text='境界前後を一括比較', command=self.run_boundaries, state='disabled'); self.boundary_button.pack(side='left')
+        ttk.Label(boundary_actions, text='同じ入力を起点に比較 / 過去へは巻き戻しません', style='Muted.TLabel').pack(side='left', padx=12)
         self.clock = tk.StringVar(value='世界時刻・予定開始・依頼の経過を分けて表示します')
         ttk.Label(self.body, textvariable=self.clock, style='Sub.TLabel', wraplength=900).pack(anchor='w', pady=(0, 8))
         self.quest_summary = tk.StringVar(value='原本Aと作業Bは変更しません。検証結果はセーブとして保存できません')
@@ -69,7 +73,17 @@ class TimelinePanel:
         self.tree.tag_configure('available', foreground='#12685d')
         self.tree.tag_configure('blocked', foreground='#55575c')
         ttk.Label(self.body, text='戦闘勝利・荷物維持、その先は近道・休息なしを仮定。戦利品と戦闘EXPは含みません', style='Muted.TLabel', wraplength=900).pack(anchor='w', pady=(8, 16))
-        ttk.Label(self.body, text='NPC予定と希望条件', style='Sub.TLabel').pack(anchor='w', pady=(0, 8))
+        self.boundary_area = ttk.Frame(self.body)
+        ttk.Label(self.boundary_area, text='時間境界の比較', style='Sub.TLabel').pack(anchor='w', pady=(0, 8))
+        self.boundary_tree = app.tree(self.boundary_area, [('age','予定から',85),('action','条件',145),('place','地点',95),('stage','段階表示',100),('status','実納品判定',225),('reward','G / RP / EXP',215),('change','基準との差',180)], height=7)
+        for key in ('action','place','stage','status','reward','change'): self.boundary_tree.column(key, anchor='w')
+        self.boundary_tree.tag_configure('warning', foreground='#8a4b08')
+        self.boundary_tree.tag_configure('not_run', foreground='#55575c')
+        self.boundary_notes = {}
+        self.boundary_detail = tk.StringVar(value='行を選択すると境界差や基準との差を表示します')
+        ttk.Label(self.boundary_area, textvariable=self.boundary_detail, wraplength=900).pack(anchor='w', pady=(8, 16))
+        self.boundary_tree.bind('<<TreeviewSelect>>', self.select_boundary)
+        self.schedule_heading = ttk.Label(self.body, text='NPC予定と希望条件', style='Sub.TLabel'); self.schedule_heading.pack(anchor='w', pady=(0, 8))
         self.schedule = app.tree(self.body, [('at','予定開始から',100), ('event','出来事',260), ('detail','境界の扱い',480)], height=5)
         self.schedule.column('event', anchor='w'); self.schedule.column('detail', anchor='w')
         ttk.Label(self.body, text='予測の前提と参照版', style='Sub.TLabel').pack(anchor='w', pady=(16, 8))
@@ -85,16 +99,19 @@ class TimelinePanel:
     def mark_stale(self, *_):
         if self.report is not None:
             self.report = None
+            self.clear_boundaries()
             self.export_button.configure(state='disabled')
             self.tree.delete(*self.tree.get_children())
             self.clock.set('入力を変更しました。「条件を検証」で再計算してください')
             self.quest_summary.set('前回の納品判定を消去しました。原本A・作業Bは未変更')
             self.warnings.set('')
+            self.details.configure(state='normal'); self.details.delete('1.0', 'end'); self.details.configure(state='disabled')
 
     def invalidate(self):
         self.frozen = None; self.report = None
+        self.clear_boundaries()
         self.source.set('作業Bから独立した検証コピーを作成してください。①の未反映入力は先に反映してください')
-        for widget in (self.quest_box, self.destination_box, self.carrier_box, self.advance_entry, self.run_button, self.export_button): widget.configure(state='disabled')
+        for widget in (self.quest_box, self.destination_box, self.carrier_box, self.advance_entry, self.run_button, self.boundary_button, self.export_button): widget.configure(state='disabled')
         for tree in (self.tree, self.schedule): tree.delete(*tree.get_children())
         self.clock.set('検証コピー未作成')
         self.quest_summary.set('原本Aと作業Bは変更しません。検証コピーからセーブは出力しません')
@@ -115,32 +132,92 @@ class TimelinePanel:
             self.carrier_ids = {'自動選択': None, **{p['name']:p['id'] for p in report['carriers']}}
             for box, var, mapping in ((self.quest_box,self.quest,self.quest_ids),(self.destination_box,self.destination,self.destination_ids),(self.carrier_box,self.carrier,self.carrier_ids)):
                 box.configure(values=list(mapping), state='readonly'); var.set(next(iter(mapping)))
-            self.advance.set('0'); self.advance_entry.configure(state='normal'); self.run_button.configure(state='normal')
+            self.advance.set('0'); self.advance_entry.configure(state='normal'); self.run_button.configure(state='normal'); self.boundary_button.configure(state='normal')
             self.source.set('検証コピー作成済み / 変更はこのタブの検証だけに使用 / 原本A・作業Bは未変更')
             self.render(report)
         except (LabError, OSError, ValueError) as exc: self.error(exc)
 
+    def get_options(self):
+        text = self.advance.get().strip()
+        if not text.isascii() or not text.isdigit(): raise LabError('追加時間は0以上の整数にしてください')
+        options = {'advanceHours':int(text)}
+        for key, value in (('questId',self.quest_ids.get(self.quest.get())),('destination',self.destination_ids.get(self.destination.get()))):
+            if value: options[key] = value
+        if options.get('questId') and self.carrier_ids.get(self.carrier.get()): options['carrierId'] = self.carrier_ids[self.carrier.get()]
+        return options
+
     def run(self):
         if self.frozen is None: return
         try:
-            text = self.advance.get().strip()
-            if not text.isascii() or not text.isdigit(): raise LabError('追加時間は0以上の整数にしてください')
-            options = {'advanceHours':int(text)}
-            for key, value in (('questId',self.quest_ids.get(self.quest.get())),('destination',self.destination_ids.get(self.destination.get()))):
-                if value: options[key] = value
-            if options.get('questId') and self.carrier_ids.get(self.carrier.get()): options['carrierId'] = self.carrier_ids[self.carrier.get()]
-            self.render(engine('timeline', save=self.frozen, options=options))
+            self.render(engine('timeline', save=self.frozen, options=self.get_options()))
+        except (LabError, OSError, ValueError) as exc: self.error(exc)
+
+    def clear_boundaries(self):
+        self.boundary_report = None
+        self.boundary_tree.delete(*self.boundary_tree.get_children())
+        self.boundary_area.pack_forget()
+        self.boundary_notes = {}
+        self.boundary_detail.set('行を選択すると境界差や基準との差を表示します')
+        self.export_button.configure(text='検証JSONを別名保存')
+
+    def select_boundary(self, *_):
+        selection = self.boundary_tree.selection()
+        if selection: self.boundary_detail.set(self.boundary_notes.get(selection[0], ''))
+
+    def run_boundaries(self):
+        if self.frozen is None: return
+        try:
+            report = engine('boundaries', save=self.frozen, options=self.get_options())
+            self.render(report['baseline'])
+            self.boundary_report = report
+            self.boundary_area.pack(fill='x', before=self.schedule_heading, pady=(0, 8))
+            names = {'turnip':'カブ','kiln':'窯','wheel':'車輪'}
+            for row in report['rows']:
+                if row['status'] == 'not_run':
+                    item = self.boundary_tree.insert('', 'end', values=(f'{row["age"]}h',names[row['eventId']], '—','—','未実行 / 基準より前','—','—'), tags=('not_run',))
+                    self.boundary_notes[item] = row.get('reason','基準時刻より前なので実行しません。時刻は巻き戻しません')
+                    continue
+                changes = row.get('changes',[])
+                labels = {'stage':'段階','delivery':'納品','forecasts':'経路','waitForMerchant':'待機','aftermath':'後日談','warnings':'警告','discrepancies':'境界差'}
+                diff = ' / '.join(labels.get(c['field'],c['field']) for c in changes) or '変化なし'
+                detail = '\n'.join(row.get('warnings',[]))
+                for change in changes:
+                    key, before, after = change['field'], change['before'], change['after']
+                    if key == 'stage': detail += f'\n段階: {before} → {after}'
+                    elif key == 'delivery': detail += f'\n納品: {before["reason"]} ({reward_text(before)}) → {after["reason"]} ({reward_text(after)})'
+                    elif key == 'waitForMerchant': detail += '\n待機可否・待機後の納品結果を再計算しました。詳細は比較JSONを参照してください'
+                    elif key == 'forecasts': detail += '\n経路の到着時刻・納品判定を再計算しました。全差分は比較JSONに保存できます'
+                    else: detail += f'\n{labels.get(key,key)}: {len(before)}件 → {len(after)}件'
+                current = row['delivery']
+                item = self.boundary_tree.insert('', 'end', values=(f'{row["age"]}h',names[row['eventId']]+' / 現在地',row['state']['locationName'],row['stage'],current['reason'],reward_text(current),diff), tags=('warning',) if row.get('discrepancies') else ())
+                self.boundary_notes[item] = detail.strip() or '基準と同じ判定です。各行は入力コピーから独立して実行しています'
+                if row.get('waitForMerchant'):
+                    wait = row['waitForMerchant']; delivery = wait['delivery']
+                    item = self.boundary_tree.insert('', 'end', values=(f'{wait["calendarAge"]}h',f'{row["age"]}h + 到着待ち',row['state']['locationName'],'待機後',delivery['reason'],reward_text(delivery),'公式待機後の判定'))
+                    self.boundary_notes[item] = '待機で回復や自動納品は行いません。納品結果は別の独立コピーで実行した結果です'
+                for forecast in row['forecasts']:
+                    delivery = forecast['delivery']
+                    item = self.boundary_tree.insert('', 'end', values=(f'{forecast["calendarAge"]}h',f'{row["age"]}h + {forecast["label"]}',forecast['destinationName'],forecast.get('scenarioStages',{}).get(row['eventId'],'—'),delivery['reason'],reward_text(delivery),'到着時点の判定'), tags=('warning',) if forecast.get('discrepancies') else ())
+                    self.boundary_notes[item] = '\n'.join(forecast.get('warnings',[])) or '戦闘勝利・荷物維持を仮定した到着時点。現在地の段階表示とは別です'
+                    if forecast.get('afterWait'):
+                        wait = forecast['afterWait']; delivery = wait['delivery']
+                        item = self.boundary_tree.insert('', 'end', values=(f'{wait["calendarAge"]}h',forecast['label']+' → 到着待ち',forecast['destinationName'],'待機後',delivery['reason'],reward_text(delivery),'公式待機後の判定'))
+                        self.boundary_notes[item] = '到着直後とは別に、公式の待機処理後の納品を独立コピーで確認しました'
+            self.export_button.configure(text='境界比較JSONを別名保存')
+            self.app.status.set('境界前後を独立コピーで比較しました。未実行の時刻と実行結果を区別しています')
         except (LabError, OSError, ValueError) as exc: self.error(exc)
 
     def error(self, exc):
         # Do not leave a previous result looking like the rejected input's result.
-        self.report = None; self.export_button.configure(state='disabled')
+        self.report = None; self.clear_boundaries(); self.export_button.configure(state='disabled')
         self.tree.delete(*self.tree.get_children())
         self.clock.set('検証できません。入力を修正して再実行してください')
         self.quest_summary.set(str(exc)); self.warnings.set('原本A・作業B・検証元コピーは未変更')
+        self.details.configure(state='normal'); self.details.delete('1.0', 'end'); self.details.configure(state='disabled')
         messagebox.showerror('条件を検証できません', str(exc), parent=self.app.root)
 
     def render(self, report):
+        self.clear_boundaries()
         self.report = report
         clock, state, quest = report['clock'], report['state'], report['activeQuest']
         self.clock.set(f'世界時刻 {clock["worldTime"]}h  /  予定開始から {clock["calendarAge"]}h  /  経過時間 {clock["elapsedHours"]}h')
@@ -150,26 +227,34 @@ class TimelinePanel:
         else: self.quest_summary.set('未受注 / 検証する既存の依頼を選択できます。新しいシナリオの作成・編集は行いません')
         self.warnings.set('\n'.join(report['warnings']))
         self.tree.delete(*self.tree.get_children())
-        rows = [('現在地で納品', clock['worldTime'], state['locationName'], report['delivery'])]
+        current_action = '現在地で期限切れ確認' if (report['delivery'].get('result') or {}).get('outcome') == 'failed' else '現在地で納品'
+        rows = [(current_action, clock['worldTime'], state['locationName'], report['delivery'])]
         if report['afterArrival']: rows.append(('到着処理後',clock['worldTime'],report['afterArrival']['locationName'],report['afterArrival']['delivery']))
         if report['waitForMerchant']:
             wait = report['waitForMerchant']; rows.append((f'行商人を待つ (+{wait["hours"]}h)',wait['worldTime'],state['locationName'],wait['delivery']))
-        for row in report['forecasts']: rows.append((f'{row["label"]} (+{row["additionalHours"]}h)',row['worldTime'],row['destinationName'],row['delivery']))
+        if report['afterArrival'] and report['afterArrival'].get('afterWait'):
+            wait = report['afterArrival']['afterWait']; rows.append((f'到着処理 → 待つ (+{wait["hours"]}h)',wait['worldTime'],report['afterArrival']['locationName'],wait['delivery']))
+        for row in report['forecasts']:
+            rows.append((f'{row["label"]} (+{row["additionalHours"]}h)',row['worldTime'],row['destinationName'],row['delivery']))
+            if row.get('afterWait'):
+                wait = row['afterWait']; rows.append((f'{row["label"]} → 待つ (+{wait["hours"]}h)',wait['worldTime'],row['destinationName'],wait['delivery']))
         for label, time, location, delivery in rows:
             self.tree.insert('', 'end', values=(label,f'{time}h',location,delivery['reason'],reward_text(delivery)), tags=('available' if delivery['available'] else 'blocked',))
         self.schedule.delete(*self.schedule.get_children())
         for event in report['calendar']['schedule']:
             self.schedule.insert('', 'end', values=(f'{event["at"]}h',event['label'],event['detail']))
         details = f'参照版: {report["sourceSha"]}\n{report["sourceUrl"]}\n\n' + '\n\n'.join(report['assumptions'])
+        if report.get('aftermath'):
+            details += '\n\n現在地で発生する後日談\n' + '\n\n'.join(item['name'] + '\n' + '\n'.join(line[1] for line in item.get('story', [])) for item in report['aftermath'])
         self.details.configure(state='normal'); self.details.delete('1.0', 'end'); self.details.insert('1.0', details); self.details.configure(state='disabled'); self.details.yview_moveto(0)
         self.export_button.configure(state='normal')
 
     def export(self):
         if self.report is None: return
-        path = filedialog.asksaveasfilename(title='クエスト検証レポートを別名保存', initialfile='quest-timeline.report.json', defaultextension='.json', filetypes=[('JSON','*.json')], parent=self.app.root)
+        path = filedialog.asksaveasfilename(title='クエスト検証レポートを別名保存', initialfile='quest-boundaries.report.json' if self.boundary_report else 'quest-timeline.report.json', defaultextension='.json', filetypes=[('JSON','*.json')], parent=self.app.root)
         if not path: return
         try:
-            save_new(path, self.report)
+            save_new(path, self.boundary_report or self.report)
             self.app.status.set('クエスト検証JSONを別名保存しました。セーブデータではありません')
         except (LabError, OSError, ValueError) as exc:
             messagebox.showerror('レポートを保存できません', str(exc), parent=self.app.root)

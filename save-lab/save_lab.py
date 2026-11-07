@@ -14,7 +14,7 @@ from contextlib import closing
 
 ROOT = Path(__file__).resolve().parent
 MAX_BYTES = 1024 * 1024
-TOOL_VERSION = '0.2.0'
+TOOL_VERSION = '0.3.1'
 
 class LabError(ValueError):
     pass
@@ -99,6 +99,43 @@ def save_new(path, value):
     except FileExistsError as exc:
         raise LabError('同名ファイルが存在します。原本・既存ファイルは上書きしません。別の名前を指定してください') from exc
     return str(destination.resolve())
+
+def export_qa_bundle(path, case_ids=None):
+    """Fresh synthetic data only. Never reads Workspace, imported saves or profiles."""
+    options = {} if case_ids is None else {'caseIds': case_ids}
+    bundle = engine('qa-fixtures', options=options)
+    destination = Path(path).expanduser()
+    # Exclusive directory creation also refuses existing directories and symlinks.
+    try:
+        destination.mkdir()
+    except FileExistsError as exc:
+        raise LabError('保存先は新規フォルダにしてください。既存フォルダや本番セーブには書き込みません') from exc
+    marker = destination / 'INCOMPLETE-TEST-ONLY.txt'
+    marker.write_text('生成未完了。このフォルダのセーブを使用しないでください。\n', encoding='utf-8')
+    cases = []
+    try:
+        for item in bundle['cases']:
+            filename = f'TEST-ONLY.{item["case"]["id"]}.json'
+            target = destination / filename
+            save_new(target, item['save'])
+            digest = hashlib.sha256(target.read_bytes()).hexdigest()
+            cases.append({'filename': filename, 'sha256': digest, **item['report']})
+        manifest = {k: v for k, v in bundle.items() if k != 'cases'}
+        manifest.update({'toolVersion': TOOL_VERSION, 'complete': True, 'cases': cases})
+        save_new(destination / 'fixture-manifest.json', manifest)
+        with (destination / 'README-TEST-ONLY.txt').open('x', encoding='utf-8') as handle:
+            handle.write('5525 人工QAセーブ / TEST ONLY\n\n'
+                         + '\n'.join(bundle['assumptions'])
+                         + '\n\n参照SHA: ' + bundle['sourceSha']
+                         + '\n各ケースの条件・納品実処理・SHA-256はfixture-manifest.jsonを参照してください。'
+                         + '\n実画面の合格を示すデータではありません。元のセーブとは別のテスト用プロフィールで確認してください。\n')
+        marker.unlink()
+    except (OSError, ValueError):
+        # Leave the explicit incomplete marker, never remove or overwrite user files.
+        raise
+    return {'saved_directory': str(destination.resolve()), 'case_count': len(cases),
+            'sourceSha': bundle['sourceSha'], 'synthetic': True, 'testOnly': True,
+            'gameUi': 'not_run', 'manifest': str((destination / 'fixture-manifest.json').resolve())}
 
 def doctor():
     """Headless diagnostics using only runtime probes and an in-memory sample."""
@@ -268,6 +305,14 @@ def main(argv=None):
     p.add_argument('save'); p.add_argument('--patch', required=True); p.add_argument('--out', required=True)
     p = sub.add_parser('compare')
     p.add_argument('before'); p.add_argument('after'); p.add_argument('--out')
+    p = sub.add_parser('qa-fixtures', help='実セーブを使わず人工QAセーブを新規フォルダへ生成')
+    p.add_argument('--out-dir', required=True)
+    p.add_argument('--case', dest='case_ids', action='append', help='qa-catalogの既定ケースID。省略時は全件')
+    sub.add_parser('qa-catalog', help='人工QAの既定ケース一覧。実セーブは読みません')
+    p = sub.add_parser('boundaries', help='独立コピーで時間境界を一括比較')
+    p.add_argument('save'); p.add_argument('--quest', dest='questId'); p.add_argument('--carrier', dest='carrierId')
+    p.add_argument('--destination'); p.add_argument('--advance-hours', type=int, default=0)
+    p.add_argument('--out')
     p = sub.add_parser('timeline', help='独立コピーでクエスト時間・条件を検証しJSON表示')
     p.add_argument('save'); p.add_argument('--quest', dest='questId'); p.add_argument('--carrier', dest='carrierId')
     p.add_argument('--destination'); p.add_argument('--advance-hours', type=int, default=0)
@@ -285,8 +330,10 @@ def main(argv=None):
             result = doctor()
             print(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False))
             return 0 if result['ok'] else 2
-        if args.command == 'catalog':
-            result = engine('catalog')
+        if args.command in ('catalog', 'qa-catalog'):
+            result = engine(args.command)
+        elif args.command == 'qa-fixtures':
+            result = export_qa_bundle(args.out_dir, args.case_ids)
         elif args.command == 'sample':
             work = Workspace(); work.sample()
             result = {'saved': work.export(args.out), 'validation': 'official engine passed'}
@@ -298,11 +345,11 @@ def main(argv=None):
             work = Workspace(); work.open(args.save)
             patch, _ = load_json(args.patch); work.apply(patch)
             result = {'saved': work.export(args.out), 'comparison': work.compare(), 'source_sha256': work.source_hash}
-        elif args.command == 'timeline':
+        elif args.command in ('timeline', 'boundaries'):
             save, digest = load_json(args.save)
             options = {k: getattr(args, k) for k in ('questId', 'carrierId', 'destination') if getattr(args, k)}
             options['advanceHours'] = args.advance_hours
-            result = engine('timeline', save=save, options=options)
+            result = engine(args.command, save=save, options=options)
             result['source_sha256'] = digest
             if args.out:
                 save_new(args.out, result)

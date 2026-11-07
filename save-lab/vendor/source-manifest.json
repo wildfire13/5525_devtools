@@ -1,6 +1,6 @@
 {
   "repository": "wildfire13/5525",
-  "sourceSha": "22e0b190ec0bb88d9438ef19487e587cd7e82b95",
+  "sourceSha": "36439cc4c6ab40e8e0a04f5e22b15d5b060e50a4",
   "files": [
     {
       "path": "native/battle-presentation.cjs",
@@ -8,7 +8,7 @@
       "bytes": 12684,
       "actualGitBlobSha": "c705c45140d8083f0ea7a6ce1efa2a7c91ce9c49",
       "sha256": "3470b79bbea5954bc4218e18b05d906ce8dd73fc01f423b906c3543162e68ec5",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/battle.js",
@@ -16,7 +16,7 @@
       "bytes": 15125,
       "actualGitBlobSha": "98b2f1e9ef63e1df497c17c22fbc9f5abce3fad8",
       "sha256": "893b0d35463923806ace15f1a5a48c26dfdb65a306b098ffa9788a773d0f7fe0",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/bridge.cjs",
@@ -24,7 +24,7 @@
       "bytes": 22077,
       "actualGitBlobSha": "7f4aea50d0f6ca74e85c92f4602a20843c9c15bb",
       "sha256": "827885ae0624cd4f168ebaef3e504525683c715350135e8437fd19aea77727d8",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/campaign-battle.js",
@@ -32,15 +32,15 @@
       "bytes": 42991,
       "actualGitBlobSha": "68643a35222e7c80e3f9c569e5e8f6ccaeaa8414",
       "sha256": "0cf39c501f4447270cf01bbe2619edb6b5ada2c4018b598a7f6f281dc2ed3de3",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/campaign.js",
-      "gitBlobSha": "dc7cf9f1cdf570ab6976508a6837815e348d0dd0",
-      "bytes": 115917,
-      "actualGitBlobSha": "dc7cf9f1cdf570ab6976508a6837815e348d0dd0",
-      "sha256": "e5446efa79b731e67ca84ea6be5d8d8c5641b719073d825690faabed9446153a",
-      "origin": "pinned GitHub connector"
+      "gitBlobSha": "df681b48cad8553587f4e6f382f20cc1e76757f1",
+      "bytes": 120256,
+      "actualGitBlobSha": "df681b48cad8553587f4e6f382f20cc1e76757f1",
+      "sha256": "f1a2c8d3d6665bedb2b43912271894526f22c792d0baa04fb0f05a73bb0fa872",
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/character-inventory.js",
@@ -48,7 +48,7 @@
       "bytes": 2583,
       "actualGitBlobSha": "1000d4ee717f6b9f812bd97649a22fcebbbb0224",
       "sha256": "24ccc01b71a8c886697aaaf40ffff2a4cd5626f233e17ce56b9018247d5d0b8b",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/data/README.md",
@@ -56,7 +56,7 @@
       "bytes": 5567,
       "actualGitBlobSha": "e78caf4bca4c257da49ba2f7ac89fcd9e6c54752",
       "sha256": "53233e522e98573168e8dabea2616a4439078d67af4e24dd0ecbfbdb011cddfe",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/data/master-source.json",
@@ -64,7 +64,7 @@
       "bytes": 65173,
       "actualGitBlobSha": "b236cba79bfac6d380cddb67a6cc2db994b9e9ed",
       "sha256": "6593146830b42f3529dc1c752f046122d4963b0665a3a3843898c5fe56704acb",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/data/master.sqlite",
@@ -72,7 +72,7 @@
       "bytes": 106496,
       "actualGitBlobSha": "70fa3e00831b7ee0bef3cf095ac2350cbdb03ecf",
       "sha256": "4503aff5f3265cf04deb62ceee535a4d2b79626669670695c0ca03faef3ea0c4",
-      "origin": "generated from pinned master-source.json with official builder"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/equipment-skills.js",
@@ -80,7 +80,7 @@
       "bytes": 276,
       "actualGitBlobSha": "f3f8509369be72e617b27d7a2954aa4eebc4b4b3",
       "sha256": "e9edfb86b920e149248d2b7670cad78458e6e22f13aff145597585e23946b801",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/equipment-slots.js",
@@ -88,7 +88,7 @@
       "bytes": 896,
       "actualGitBlobSha": "4f3f9402f9aac7c7b7dc195b80c8fe087b986d70",
       "sha256": "8b61901b35864f80754cc66cd58e4379bb41d19f9cacd14d43f792a18a86daec",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/godot-io.cjs",
@@ -96,7 +96,7 @@
       "bytes": 1541,
       "actualGitBlobSha": "7655f6948bd25e761925eb74a558a2d2d70379db",
       "sha256": "e5095c7ca557fd16cfa46c9193d95c3efcc27e765f39267b8f9d9178b80f7616",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/intent-info.cjs",
@@ -104,7 +104,7 @@
       "bytes": 1575,
       "actualGitBlobSha": "a2760077546aaeccdded4b02dab58ba39fab7053",
       "sha256": "7ec490fe07e8453d3f3f3cc6e88ddcd7da81fb4f172ae221dee0802ecb0837aa",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/journey.js",
@@ -112,7 +112,7 @@
       "bytes": 4128,
       "actualGitBlobSha": "c23685b2681f9142a4c12483894da81ea1f87aa9",
       "sha256": "7a1b4de5309716e3f39cb1b7ef0341ac4cda963dfaa6abb13d608df3e171adeb",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/master-data.cjs",
@@ -120,7 +120,7 @@
       "bytes": 983,
       "actualGitBlobSha": "6c4231119f2fb64d40bdad0dc0221c4dfc8c48a7",
       "sha256": "fb3b862ba8e76061f3d59373ac0f8ec6bb491f291f0e70619f9ed6f0d2a66cc4",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/master_data.py",
@@ -128,7 +128,7 @@
       "bytes": 15012,
       "actualGitBlobSha": "01ce4d35beef05fe5ad3bb5808ae5d78a43ec1d1",
       "sha256": "14123f6654c4d4b758f0c0e9018f521162476037055fe97985f1dbf06c54200b",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/play-log.js",
@@ -136,7 +136,7 @@
       "bytes": 3750,
       "actualGitBlobSha": "96e48f6a140e62c096c5102ef322704ac60e7f27",
       "sha256": "b7aae87a4a5a23665b050052b9cede24beb4a097277f7a3fc451b2456e2345f0",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/qa-fixtures.cjs",
@@ -144,7 +144,7 @@
       "bytes": 5519,
       "actualGitBlobSha": "59f7cbf4e4afa1e22099f65fe9e4f201914406cd",
       "sha256": "1e8459524202905d97d3f6df6c4b548cc02a2202f651e0bc4564ec8316e0bf9c",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/quest-cargo.js",
@@ -152,7 +152,7 @@
       "bytes": 1111,
       "actualGitBlobSha": "7bec5c030dc0bed83f3ddfa075756966500a0611",
       "sha256": "33583bf302856a2b32a9edd7c21aa343bc667c25a50822f8108dd6c1dfcfc73f",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/recruit-roster.js",
@@ -160,7 +160,7 @@
       "bytes": 1452,
       "actualGitBlobSha": "617cba4ea08c7d17ec233cffb703fedc478ea4fb",
       "sha256": "578407599474ad439f09c55e2b7c15e24424c4d6106af40f1bc73e0259881162",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/shop-transactions.js",
@@ -168,7 +168,7 @@
       "bytes": 7733,
       "actualGitBlobSha": "339a8a3f0df0ef54aa92dfff48796177e1eec6c8",
       "sha256": "52afaca197c2e44c25ef0db8b1d4c6b6803333b0158460f77cb271439182ac77",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/test-current-fixture.cjs",
@@ -176,7 +176,7 @@
       "bytes": 654,
       "actualGitBlobSha": "0347f98954b5eadca7ec6d888afd788620089f04",
       "sha256": "15cb157288125b8eb08fa999182c438ae04ee8a74392d3b5dc20d80be02e23d1",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/test-stalemate-fixture.cjs",
@@ -184,7 +184,7 @@
       "bytes": 573,
       "actualGitBlobSha": "99ea544785f520c141ddb907fa112d6525da3dd1",
       "sha256": "2ab3fb4c7d6e138c9d4a07b060dfcef22a975a827b88b33888748131539b8100",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/test_campaign.cjs",
@@ -192,7 +192,7 @@
       "bytes": 33290,
       "actualGitBlobSha": "437ad3e3dd706d3de8a81919e24839a671daa3f4",
       "sha256": "553081d80f3889ee55f5687772d7fb49c500809d1b3bbedf869932e27b705d1a",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/test_equipment_slots.cjs",
@@ -200,7 +200,7 @@
       "bytes": 7439,
       "actualGitBlobSha": "11e76c07dd61a51f2424b8f9cf6d725445b435a2",
       "sha256": "4aef18d2d29599df60be98f45ba4f9250fb51f35b3bb76acd72bc010d7afc3c5",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/test_fixtures/campaign-f736137-stalemate.json",
@@ -208,7 +208,7 @@
       "bytes": 40586,
       "actualGitBlobSha": "b2343bc341f000265905090945986498311eb19f",
       "sha256": "eb7f8d135494c23cc41461c880e4c0cceec6a70072bb268d68c10fbd9649a1dd",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/test_sqlite_grant_save.cjs",
@@ -216,7 +216,7 @@
       "bytes": 6533,
       "actualGitBlobSha": "f86a437da981a8ea8258c7900f609db98768f55e",
       "sha256": "e390e530ae3f4cdb0f8a0c67b0b7f027af09a0e30a1f1af5910fc4698b750c94",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/test_weight_elements.cjs",
@@ -224,7 +224,7 @@
       "bytes": 7560,
       "actualGitBlobSha": "9d83a47b1d955c4dc845f1fe4dfa199ea9025763",
       "sha256": "4258fc01c6f7022da4d3097a18e8d7d5114adfcb9f9085ad74fff187bbce6061",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/voice-events.cjs",
@@ -232,7 +232,7 @@
       "bytes": 1370,
       "actualGitBlobSha": "0402b6baa5b4f3abc3a2c861896f6264b29ce74b",
       "sha256": "ee74a797b0102881b08ea746fd40d1ff84450b1eca1c333176e67ecefae5fa70",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
     },
     {
       "path": "native/warehouse.js",
@@ -240,7 +240,16 @@
       "bytes": 3132,
       "actualGitBlobSha": "e3ced34b806553803c72654f8e798b7a3abc86c5",
       "sha256": "b7b40188916aa6cd21a3d555b7118ed94a72014913afe4520d0e965fe2b235ee",
-      "origin": "pinned GitHub connector"
+      "origin": "exact git object from verified official main commit"
+    },
+    {
+      "path": "native/test_quest_decisions.cjs",
+      "gitBlobSha": "9f0a475acb109e792ca5e38306916c638e72c333",
+      "actualGitBlobSha": "9f0a475acb109e792ca5e38306916c638e72c333",
+      "bytes": 7146,
+      "sha256": "bfbda733b625fb554bff73c8425219a626330389277fea42487f1aef129bf764",
+      "origin": "exact git object from verified official main commit"
     }
-  ]
+  ],
+  "sourceStatus": "official main commit verified after merge of PR #5"
 }
