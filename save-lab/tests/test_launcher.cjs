@@ -26,6 +26,15 @@ test('explicit env and config precede PATH and py registry, with case-insensitiv
  assert.ok(list.some(x=>x.executable==='C:\\Program Files\\Python312\\python.exe'));
  assert.equal(calls.length,1); assert.deepEqual(calls[0].args,['-0p']); assert.equal(calls[0].opts.shell,false);
 });
+test('Windows and POSIX candidate paths are independent of the host filesystem', () => {
+ for(const [platform, api, root] of [['win32',path.win32,'C:\\Save Lab'],['linux',path.posix,'/tmp/save-lab']]) {
+  const filename='日本語 Python & $(not-a-command).exe';
+  const absolute=api.join(root,'absolute',filename);const relative=api.join('relative',filename);
+  const list=L.candidates({python:relative},{SAVE_LAB_PYTHON:absolute},{root,platform,exists:()=>false,spawnSync:()=>{throw Error('unexpected process');}});
+  assert.deepEqual(list.map(c=>c.executable),[absolute,api.join(root,relative)]);
+  assert.deepEqual(list.map(c=>c.args),[[],[]]);
+ }
+});
 test('broken 3.14 probe falls back to working 3.13 and stops', () => {
  const list = ['C:\\Python314\\python.exe','C:\\Python313\\python.exe','C:\\Python312\\python.exe'].map(executable=>({executable,args:[],source:'PATH'}));
  const calls=[]; const result = L.selectPython(list,c=>L.probePython(c,{spawnSync:(exe,args,opts)=>{calls.push(exe);assert.equal(opts.shell,false);assert.match(args.at(-1),/t\.loadtk\(\)/);return exe.includes('314')?bad('TclError: init.tcl not found'):good(exe);}}));
@@ -52,7 +61,10 @@ test('no candidates reports actionable failure without launching', () => temp(ro
 }));
 test('app failure does not probe/relaunch another runtime; configured paths remain literal argv', () => temp(root => {
  const executable=path.join(root,'日本語 Python & $(not-a-command).exe');const savedir=path.join(root,'セーブ Folder');fs.mkdirSync(savedir);writeConfig(root,{python:executable,saveDirectory:savedir});
- const calls=[];const options={root,env:{PATH:'/fallback'},platform:'linux',exists:()=>true,log:()=>{},error:()=>{},spawnSync:(exe,args,opts)=>{calls.push({exe,args,opts});assert.equal(opts.shell,false);return args.includes('-c')?good(exe):{status:17};}};
+ // These are real temp paths, so use native path rules. Keep a fallback Python
+ // candidate without inventing a Windows py launcher/registry subprocess.
+ const calls=[];const options={root,env:{PATH:path.join(root,'fallback')},platform:process.platform,exists:p=>/^python3?(\.exe)?$/.test(path.basename(p)),log:()=>{},error:()=>{},spawnSync:(exe,args,opts)=>{calls.push({exe,args,opts});assert.equal(opts.shell,false);return args.includes('-c')?good(exe):{status:17};}};
+ assert.ok(L.candidates({python:executable},options.env,options).length>1);
  assert.equal(L.main([],options),17);assert.equal(calls.length,2);assert.equal(calls[0].exe,executable);assert.equal(calls[1].exe,executable);assert.deepEqual(calls[1].args,['-X','utf8',path.join(root,'save_lab.py'),'gui']);assert.equal(calls[1].opts.env.SAVE_LAB_SAVE_DIR,savedir);
 }));
 test('app signals and spawn errors return failure without fallback', () => {

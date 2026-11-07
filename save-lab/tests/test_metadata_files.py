@@ -192,7 +192,7 @@ class MetadataFiles(unittest.TestCase):
         output = self.directory / 'CLI出力_顔画像あり.json'
 
         def cli(*args):
-            result = subprocess.run([sys.executable, str(ROOT / 'save_lab.py'), *map(str, args)],
+            result = subprocess.run([sys.executable, '-X', 'utf8', str(ROOT / 'save_lab.py'), *map(str, args)],
                                     capture_output=True, text=True, encoding='utf-8')
             self.assertEqual(result.returncode, 0, result.stderr)
             return json.loads(result.stdout)
