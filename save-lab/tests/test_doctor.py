@@ -102,7 +102,7 @@ class Doctor(unittest.TestCase):
         self.assert_report(json.loads(result.stdout), True)
 
     def test_real_cli_version_does_not_require_node(self):
-        self.assertEqual(save_lab.TOOL_VERSION, '0.3.0')
+        self.assertEqual(save_lab.TOOL_VERSION, '0.3.1')
         env = os.environ.copy()
         env['SAVE_LAB_NODE'] = 'not-an-installed-node-executable'
         env['PYTHONDONTWRITEBYTECODE'] = '1'

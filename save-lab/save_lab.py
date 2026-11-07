@@ -14,7 +14,7 @@ from contextlib import closing
 
 ROOT = Path(__file__).resolve().parent
 MAX_BYTES = 1024 * 1024
-TOOL_VERSION = '0.3.0'
+TOOL_VERSION = '0.3.1'
 
 class LabError(ValueError):
     pass

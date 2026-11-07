@@ -8,7 +8,7 @@ const {isDeepStrictEqual}=require('node:util');
 const Envelope=require('./metadata-envelope.cjs');
 const Timeline=require('./quest-timeline.cjs');
 const QA=require('./qa-fixtures.cjs');
-const sourceSha='22e0b190ec0bb88d9438ef19487e587cd7e82b95';
+const sourceSha=require('./vendor/source-manifest.json').sourceSha;
 const fail=m=>{throw new Error(m)};
 function record(v,label){if(!v||typeof v!=='object'||Array.isArray(v)||Object.getPrototypeOf(v)!==Object.prototype)fail(label+' must be an object');}
 function keys(v,allowed,label){record(v,label);for(const k of Object.keys(v))if(!allowed.includes(k))fail(label+': unsupported key '+k);}
