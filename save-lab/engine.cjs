@@ -1,4 +1,5 @@
 'use strict';
+const {verifyRoundtrip} = require('./save-validation.cjs');
 const {gameModule, sourceSha} = require('./game-source.cjs');
 // Each invocation uses the verified game revision selected for this workspace.
 const C=gameModule('campaign.js');
@@ -13,8 +14,10 @@ const fail=m=>{throw new Error(m)};
 function record(v,label){if(!v||typeof v!=='object'||Array.isArray(v)||Object.getPrototypeOf(v)!==Object.prototype)fail(label+' must be an object');}
 function keys(v,allowed,label){record(v,label);for(const k of Object.keys(v))if(!allowed.includes(k))fail(label+': unsupported key '+k);}
 function integer(v,label){if(!Number.isSafeInteger(v)||v<0||v>100000000)fail(label+' must be an integer from 0 to 100000000');return v;}
-function load(save){if(save===undefined)fail('save is required');return C.deserialize(Envelope.split(save).core);}
-function checked(s,extras={}){const v=C.validate(s);if(!v.ok)fail(v.error);const raw=C.serialize(s);const again=C.deserialize(raw);const rawAgain=C.serialize(again);if(rawAgain!==raw)fail('Save changed during reload verification');return Envelope.join(JSON.parse(raw),extras);}
+function checked(state, extras = {}) {
+  const {raw} = verifyRoundtrip(state, 'Save changed during reload verification');
+  return Envelope.join(JSON.parse(raw), extras);
+}
 function editable(s){return s.phase==='town'&&!s.activeQuest&&!s.rollback&&!s.journey&&!s.battle&&!s.result;}
 function inspectState(s){
  const view=C.view(s);

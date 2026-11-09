@@ -116,6 +116,18 @@ class LocalFiles(unittest.TestCase):
         work=Workspace(); work.open(self.source); before=copy.deepcopy(work.after)
         with self.assertRaises(LabError): work.apply({'gold':-1})
         self.assertEqual(work.after,before); self.assertEqual(work.undo_stack,[])
+    def test_failed_undo_or_reset_preserves_history_and_inspection(self):
+        work = Workspace()
+        work.open(self.source)
+        work.apply({'gold': 777})
+        expected = copy.deepcopy((work.after, work.info, work.undo_stack))
+        for operation in (work.undo, work.reset):
+            with self.subTest(operation=operation.__name__):
+                with mock.patch('save_lab.engine', side_effect=LabError('inspection failed')):
+                    with self.assertRaises(LabError):
+                        operation()
+                self.assertEqual((work.after, work.info, work.undo_stack), expected)
+
     def test_undo_reset(self):
         work=Workspace(); work.open(self.source); work.apply({'gold':777}); work.undo()
         self.assertEqual(work.after,self.sample)

@@ -1,4 +1,5 @@
 'use strict';
+const {verifyRoundtrip} = require('./save-validation.cjs');
 const {gameModule, sourceSha, repository} = require('./game-source.cjs');
 // Synthetic QA is deliberately separate from imported saves and timeline reports.
 const C = gameModule('campaign.js');
@@ -18,11 +19,6 @@ const assumptions = [
   'この結果は固定参照版のものです。別SHAのゲームや修正候補を検証済みとは扱えません。'
 ];
 function catalog() { return {schemaVersion:1,kind:'syntheticQaCatalog',synthetic:true,...source(),cases:definitions.map(d=>({...d})),assumptions:[...assumptions]}; }
-function verified(s) {
-  const v=C.validate(s);if(!v.ok)fail(v.error);
-  const raw=C.serialize(s),again=C.deserialize(raw);if(C.serialize(again)!==raw)fail('人工QAセーブの再読込が一致しません');
-  return again;
-}
 function make(def) {
   const s=C.create(); s.location=def.origin;
   if(def.mode!=='offered') {
@@ -38,7 +34,8 @@ function make(def) {
     }
   }
   C.view(s);
-  const state=verified(s),save=JSON.parse(C.serialize(state));
+  const {raw, reloaded: state} = verifyRoundtrip(s, '人工QAセーブの再読込が一致しません');
+  const save = JSON.parse(raw);
   const view=C.view(state);
   return {case:{...def},save,report:{schemaVersion:1,kind:'syntheticQaFixture',synthetic:true,testOnly:true,...source(),case:{...def},validation:{officialValidator:true,serializeReloadIdentical:true,gameUi:'not_run'},aftermath:view.scenarioAftermath.map(({id,name})=>({id,name})),timeline:Timeline.timeline(save),assumptions:[...assumptions]}};
 }

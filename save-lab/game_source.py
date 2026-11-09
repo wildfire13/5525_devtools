@@ -107,13 +107,20 @@ def _verified(revision):
         return False
 
 
-def cached_source():
-    cache = cache_directory()
+def _active_sha(cache):
     try:
         sha = json.loads((cache/'active.json').read_text(encoding='utf-8'))['sha']
     except (ValueError, OSError, TypeError, KeyError):
         return None
     if not isinstance(sha,str) or not SHA.fullmatch(sha):
+        return None
+    return sha
+
+
+def cached_source():
+    cache = cache_directory()
+    sha = _active_sha(cache)
+    if sha is None:
         return None
     revision = cache/'revisions'/sha
     return revision if _verified(revision) else None
@@ -174,7 +181,7 @@ def _writer(cache):
         yield
 
 
-def _offline():
+def offline_mode():
     return os.environ.get('SAVE_LAB_OFFLINE','').strip().lower() in ('1','true','yes','on')
 
 
@@ -184,7 +191,7 @@ def ensure_source():
 
 
 def sync_source():
-    if _offline():
+    if offline_mode():
         raise GameSourceError('オフライン指定中はゲーム参照を取得できません')
     cache = cache_directory()
     revisions = cache/'revisions'
@@ -212,7 +219,7 @@ def sync_source():
                     raise
             else:
                 # A previously fetched revision can be reused after a rollback.
-                if cached_source() != target:
+                if _active_sha(cache) != sha:
                     _probe(target)
             pointer = staging/'active.json'
             pointer.write_text(json.dumps({'sha':sha})+'\n',encoding='utf-8')
