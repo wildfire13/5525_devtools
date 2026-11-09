@@ -10,11 +10,18 @@ import shutil
 import subprocess
 import sys
 import re
+import time
 from contextlib import closing
+import game_source
+from game_source import offline_mode
 
 ROOT = Path(__file__).resolve().parent
 MAX_BYTES = 1024 * 1024
-TOOL_VERSION = '0.3.1'
+TOOL_VERSION = '0.4.0'
+# CLI auto-update checks the network only when active.json is older than this.
+# GUI launches always check once before the first catalog. SAVE_LAB_OFFLINE=1
+# disables automatic network access for tests and offline use.
+SOURCE_REFRESH_SECONDS = 24 * 60 * 60
 
 class LabError(ValueError):
     pass
@@ -68,12 +75,122 @@ def configured_save_directory():
         raise LabError(f'設定したセーブフォルダが見つかりません: {target}')
     return str(target.resolve())
 
+def source_sha(path):
+    """game-source.cjs and game_source.py name each checkout after its SHA."""
+    name = Path(path).expanduser().resolve().name
+    if not game_source.SHA.fullmatch(name):
+        raise LabError(f'ゲームソースのフォルダー名が40桁のコミットIDではありません: {path}')
+    return name
+
+def cache_is_fresh():
+    """CLI-only 24h TTL; GUI launches pass ttl=False and always check once."""
+    try:
+        age = time.time() - (Path(game_source.cache_directory()).expanduser() / 'active.json').stat().st_mtime
+    except OSError:
+        return False
+    return 0 <= age < SOURCE_REFRESH_SECONDS
+
+_PIN = None
+_SOURCE_ERROR = None
+
+def reset_source_pin():
+    """Test hook: forget this process's pin and any cached failure."""
+    global _PIN, _SOURCE_ERROR
+    _PIN = None
+    _SOURCE_ERROR = None
+
+def _pin_source(path, origin, warning=None):
+    directory = Path(path).expanduser().resolve()
+    if not directory.is_dir():
+        raise LabError(f'ゲームソースのフォルダーが見つかりません: {directory}')
+    return {'directory': str(directory), 'sha': source_sha(directory),
+            'origin': origin, 'warning': warning}
+
+
+def ensure_pinned_source(auto_sync=True, ttl=True):
+    """Resolve and freeze one verified revision for this Python process.
+
+    The first call may sync once. Later calls never change revision, even after
+    a manual sync publishes a new active.json for the next launch.
+    """
+    global _PIN, _SOURCE_ERROR
+    if _PIN is not None:
+        return dict(_PIN)
+    if _SOURCE_ERROR is not None:
+        raise LabError(_SOURCE_ERROR)
+    try:
+        _PIN = _resolve_source(auto_sync=auto_sync, ttl=ttl)
+    except LabError as exc:
+        _SOURCE_ERROR = str(exc)
+        raise
+    return dict(_PIN)
+
+def _resolve_source(auto_sync, ttl):
+    cached = game_source.cached_source()
+    if cached is not None:
+        cached = Path(cached).expanduser()
+    if offline_mode():
+        if cached is not None:
+            sha = source_sha(cached)
+            return _pin_source(cached, 'cache',
+                               f'オフライン指定 (SAVE_LAB_OFFLINE=1) のため最新確認をしていません。使用中 {sha[:8]}')
+        raise LabError('オフライン指定 (SAVE_LAB_OFFLINE=1) で利用できる検証済みキャッシュがありません。'
+                       'ネット接続できる場所で「python save_lab.py sync」を実行してから再試行してください')
+    if auto_sync and not (ttl and cached is not None and cache_is_fresh()):
+        try:
+            path = game_source.sync_source()
+        except Exception as exc:
+            if cached is not None:
+                sha = source_sha(cached)
+                return _pin_source(cached, 'cache',
+                                   f'最新のゲーム更新を確認できませんでした。検証済みキャッシュ {sha[:8]} を使用します（{exc}）')
+            raise LabError('ゲームソースを準備できませんでした。最新確認に失敗し、検証済みキャッシュもありません。'
+                           f'（{exc}）ネット接続を確認して「python save_lab.py sync」を実行してください') from exc
+        return _pin_source(path, 'sync')
+    if cached is not None:
+        return _pin_source(cached, 'cache')
+    raise LabError('検証済みゲームソースのキャッシュがありません。'
+                   '「python save_lab.py sync」で最新ソースを取得するか、'
+                   '「python save_lab.py doctor」で配布物とネット接続を確認してください')
+
+def source_state():
+    """Pinned revision plus the published next-launch revision, if different."""
+    if _PIN is None:
+        return None
+    state = dict(_PIN)
+    cached = game_source.cached_source()
+    cached = Path(cached).expanduser() if cached is not None else None
+    state['next_sha'] = source_sha(cached) if cached is not None else state['sha']
+    state['revision_changed'] = state['next_sha'] != state['sha']
+    state['offline'] = offline_mode()
+    state['cache'] = str(Path(game_source.cache_directory()).expanduser().resolve())
+    return state
+
+def sync_source_now():
+    """Explicit online sync. Publishes for the next launch, never repins this process."""
+    if offline_mode():
+        raise LabError('SAVE_LAB_OFFLINE=1 のためゲームソースを同期しません。'
+                       'オンラインで更新する場合は SAVE_LAB_OFFLINE を解除してから再実行してください')
+    before = game_source.cached_source()
+    before_sha = source_sha(before) if before is not None else None
+    path = game_source.sync_source()
+    sha = source_sha(path)
+    after = game_source.cached_source()
+    after_sha = source_sha(after) if after is not None else None
+    return {'sourceSha': sha, 'sourceDir': str(Path(path).expanduser().resolve()),
+            'directory': str(Path(path).expanduser().resolve()),
+            'previousSha': before_sha, 'nextSha': after_sha or sha,
+            'changed': before_sha != sha, 'published': after_sha == sha,
+            'cache': str(Path(game_source.cache_directory()).expanduser().resolve())}
+
 def engine(cmd, **values):
+    source = ensure_pinned_source()
     node = os.environ.get('SAVE_LAB_NODE', '').strip() or shutil.which('node')
     if not node:
         raise LabError('Node.jsが見つかりません。Node.js 18以降をインストールしてください')
     env = os.environ.copy()
     env['NATIVE5525_PYTHON'] = sys.executable
+    env['SAVE_LAB_SOURCE_DIR'] = source['directory']
     try:
         run = subprocess.run([node, str(ROOT / 'engine.cjs')], input=json.dumps({'cmd': cmd, **values}, ensure_ascii=False, allow_nan=False), text=True, encoding='utf-8', capture_output=True, cwd=ROOT, env=env, timeout=30)
     except subprocess.TimeoutExpired as exc:
@@ -145,7 +262,14 @@ def doctor():
         'runtimes': {'python': {'executable': sys.executable, 'version': sys.version.split()[0]}},
         'constraints': {'max_save_bytes': MAX_BYTES, 'editable_scope': 'unaccepted_town',
                         'overwrites_existing_files': False, 'preserves_godot_metadata': True,
-                        'network_requests': False},
+                        'network_requests': False,
+                        'network_policy': {
+                            'doctor': 'no network access',
+                            'gui_launch': 'one game-source update check before the first catalog',
+                            'cli_first_engine': 'one check per process; active.json newer than 24h skips it',
+                            'skip_automatic_sync': 'SAVE_LAB_OFFLINE=1',
+                            'manual_sync': 'python save_lab.py sync / GUI update button',
+                        }},
         'gui': {'tested': False, 'next_step': 'node launch.cjs --diagnose'},
         'next_steps': [],
     }
@@ -172,6 +296,30 @@ def doctor():
     except sqlite_errors as exc:
         check('sqlite_json', 'fail', str(exc), 'sqlite_json_unavailable')
         report['next_steps'].append('SQLiteのJSON機能を備えたPython実体を指定してください')
+    source = None
+    try:
+        # Doctor must not sync: it only inspects a verified cache.
+        source = ensure_pinned_source(auto_sync=False)
+        state = source_state()
+        report['source'] = {'sha': state['sha'], 'directory': state['directory'],
+                            'origin': state['origin'], 'warning': state['warning'],
+                            'next_sha': state['next_sha'],
+                            'revision_changed': state['revision_changed'],
+                            'offline': state['offline'], 'cache': state['cache']}
+        detail = f'{state["sha"][:8]} ({state["origin"]})'
+        if state['warning']:
+            detail += ' / ' + state['warning']
+        check('game_source', 'pass', detail)
+        if state['revision_changed']:
+            report['next_steps'].append('次回起動で新しいゲームソースが使われます。現在の作業を保存してから再起動してください')
+    except (LabError, OSError, ValueError) as exc:
+        check('game_source', 'fail', str(exc), 'game_source_unavailable')
+        report['source'] = {'sha': None, 'directory': None, 'origin': None, 'warning': str(exc),
+                            'next_sha': None, 'revision_changed': False,
+                            'offline': offline_mode(),
+                            'cache': str(Path(game_source.cache_directory()).expanduser().resolve())}
+        report['next_steps'].append('ネット接続を確認し「python save_lab.py sync」で検証済みゲームソースを取得してください')
+        report['next_steps'].append('オフラインで既存キャッシュを使う場合は SAVE_LAB_OFFLINE=1 を設定してください')
     node = os.environ.get('SAVE_LAB_NODE', '').strip() or shutil.which('node')
     report['runtimes']['node'] = {'executable': node, 'version': None}
     node_ready = False
@@ -196,20 +344,22 @@ def doctor():
         except (OSError, subprocess.SubprocessError, ValueError) as exc:
             check('node_version', 'fail', str(exc), 'node_probe_failed')
             report['next_steps'].append('SAVE_LAB_NODEのパスと実行可否を確認してください。自動インストールは行いません')
-    if node_ready and report['ok']:
+    if node_ready and report['ok'] and source is not None:
         try:
             sample = engine('new')
             normalized = engine('normalize', save=sample)
             if normalized.get('migrated') or normalized.get('save') != sample:
                 raise LabError('人工サンプルの往復結果が一致しません')
             info = engine('inspect', save=normalized['save'])
+            if info.get('sourceSha') != source['sha']:
+                raise LabError(f'検証エンジンの参照SHAが一致しません: {info.get("sourceSha")} / {source["sha"]}')
             report['source_commit'] = info['sourceSha']
             check('engine_roundtrip', 'pass', '人工サンプルの生成・公式検証・再読込が一致しました')
         except (LabError, OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
             check('engine_roundtrip', 'fail', str(exc), 'engine_failed')
-            report['next_steps'].append('配布物をフォルダーごと展開し、vendorを含むファイルが揃っているか確認してください')
+            report['next_steps'].append('配布物をフォルダーごと展開し、game_source.py・game-source.cjs・native が揃っているか確認してください')
     else:
-        check('engine_roundtrip', 'not_run', '先にランタイムの失敗を解消してください')
+        check('engine_roundtrip', 'not_run', '先にランタイムまたはゲームソースの失敗を解消してください')
     return report
 
 class Workspace:
@@ -248,29 +398,33 @@ class Workspace:
         self.undo_stack = []
         return info
 
+    def _inspect_work(self, save):
+        info = engine('inspect', save=save)
+        info['warnings'] = self.import_warnings + info.get('warnings', [])
+        return info
+
     def apply(self, patch):
         if self.after is None:
             raise LabError('先にセーブを開いてください')
         candidate = engine('edit', save=self.after, patch=patch)
-        info = engine('inspect', save=candidate)
-        info['warnings'] = self.import_warnings + info.get('warnings', [])
+        info = self._inspect_work(candidate)
         self.undo_stack.append(copy.deepcopy(self.after))
         self.after, self.info = candidate, info
         return info
 
     def undo(self):
         if self.undo_stack:
+            info = self._inspect_work(self.undo_stack[-1])
             self.after = self.undo_stack.pop()
-            self.info = engine('inspect', save=self.after)
-            self.info['warnings'] = self.import_warnings + self.info.get('warnings', [])
+            self.info = info
         return self.info
 
     def reset(self):
         if self.before is not None:
+            info = self._inspect_work(self.before)
             self.undo_stack.append(copy.deepcopy(self.after))
             self.after = copy.deepcopy(self.before)
-            self.info = engine('inspect', save=self.after)
-            self.info['warnings'] = self.import_warnings + self.info.get('warnings', [])
+            self.info = info
         return self.info
 
     def compare(self):
@@ -290,11 +444,12 @@ class Workspace:
         return save_new(path, self.after)
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description='5525 local save manager. No network, no overwrite.')
+    parser = argparse.ArgumentParser(description='5525 local save manager with automatic game-source updates.')
     parser.add_argument('--version', action='version', version=f'5525 Save Lab {TOOL_VERSION}')
     sub = parser.add_subparsers(dest='command')
     sub.add_parser('gui', help='ネイティブ画面を開く')
     sub.add_parser('doctor', help='画面やセーブを開かずJSONで環境・公式エンジンを診断')
+    sub.add_parser('sync', help='最新のゲームソースを取得し、次回起動用に公開')
     sub.add_parser('catalog', help='装備・スキルのマスター情報')
     p = sub.add_parser('sample', help='公式エンジンで新規サンプルを生成')
     p.add_argument('--out', required=True)
@@ -330,7 +485,11 @@ def main(argv=None):
             result = doctor()
             print(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False))
             return 0 if result['ok'] else 2
-        if args.command in ('catalog', 'qa-catalog'):
+        if args.command == 'sync':
+            result = sync_source_now()
+            if not result['published']:
+                raise LabError('同期は完了しましたが、次回起動用の active.json が同じSHAに更新されていません')
+        elif args.command in ('catalog', 'qa-catalog'):
             result = engine(args.command)
         elif args.command == 'qa-fixtures':
             result = export_qa_bundle(args.out_dir, args.case_ids)
@@ -358,6 +517,8 @@ def main(argv=None):
             result = engine('compare', before=before, after=after)
             if args.out:
                 save_new(args.out, result)
+        if _PIN and _PIN.get('warning') and not offline_mode():
+            print(_PIN['warning'], file=sys.stderr)
         print(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False))
         return 0
     except (LabError, OSError, ValueError) as exc:

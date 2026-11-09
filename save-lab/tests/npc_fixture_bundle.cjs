@@ -1,6 +1,7 @@
 // TEST ONLY. Pure synthetic fixture bundle; never reads a user save or writes a file.
 'use strict';
-const C=require('../vendor/5525/native/campaign.js'),T=require('../quest-timeline.cjs'),Q=require('../qa-fixtures.cjs');
+const {gameModule} = require('../game-source.cjs');
+const C=gameModule('campaign.js'),T=require('../quest-timeline.cjs'),Q=require('../qa-fixtures.cjs');
 const assert=require('node:assert/strict');
 const bundle=Q.fixtures();
 const definitions=[

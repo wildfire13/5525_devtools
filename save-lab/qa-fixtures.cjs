@@ -1,10 +1,11 @@
 'use strict';
+const {verifyRoundtrip} = require('./save-validation.cjs');
+const {gameModule, sourceSha, repository} = require('./game-source.cjs');
 // Synthetic QA is deliberately separate from imported saves and timeline reports.
-const C = require('./vendor/5525/native/campaign.js');
+const C = gameModule('campaign.js');
 const Timeline = require('./quest-timeline.cjs');
-const manifest = require('./vendor/source-manifest.json');
 const fail = message => { throw new Error(message); };
-const source = () => ({sourceSha:manifest.sourceSha,sourceUrl:`https://github.com/${manifest.repository}/blob/${manifest.sourceSha}/native/campaign.js`});
+const source = () => ({sourceSha,sourceUrl:`https://github.com/${repository}/blob/${sourceSha}/native/campaign.js`});
 const definitions = [
   ...[['turnip','north','astaris',[17,18,19]],['kiln','astaris','east',[19,20,21,22,23]],['wheel','east','astaris',[9,10,17]],['wheel','east','south',[18,23,24,25,35,36,37]]].flatMap(([eventId,origin,location,ages]) => ages.map(age => ({id:`${eventId}-accepted-${age}h`,eventId,origin,location,age,mode:'accepted',label:`${{turnip:'カブ',kiln:'最後の窯',wheel:'車輪'}[eventId]} / 受注中 / ${age}h`}))),
   ...[['turnip','north'],['kiln','astaris'],['wheel','east']].map(([eventId,location])=>({id:`${eventId}-offered-0h`,eventId,origin:location,location,age:0,mode:'offered',label:`${{turnip:'カブ',kiln:'最後の窯',wheel:'車輪'}[eventId]} / 未受注 / 0h`})),
@@ -18,11 +19,6 @@ const assumptions = [
   'この結果は固定参照版のものです。別SHAのゲームや修正候補を検証済みとは扱えません。'
 ];
 function catalog() { return {schemaVersion:1,kind:'syntheticQaCatalog',synthetic:true,...source(),cases:definitions.map(d=>({...d})),assumptions:[...assumptions]}; }
-function verified(s) {
-  const v=C.validate(s);if(!v.ok)fail(v.error);
-  const raw=C.serialize(s),again=C.deserialize(raw);if(C.serialize(again)!==raw)fail('人工QAセーブの再読込が一致しません');
-  return again;
-}
 function make(def) {
   const s=C.create(); s.location=def.origin;
   if(def.mode!=='offered') {
@@ -38,7 +34,8 @@ function make(def) {
     }
   }
   C.view(s);
-  const state=verified(s),save=JSON.parse(C.serialize(state));
+  const {raw, reloaded: state} = verifyRoundtrip(s, '人工QAセーブの再読込が一致しません');
+  const save = JSON.parse(raw);
   const view=C.view(state);
   return {case:{...def},save,report:{schemaVersion:1,kind:'syntheticQaFixture',synthetic:true,testOnly:true,...source(),case:{...def},validation:{officialValidator:true,serializeReloadIdentical:true,gameUi:'not_run'},aftermath:view.scenarioAftermath.map(({id,name})=>({id,name})),timeline:Timeline.timeline(save),assumptions:[...assumptions]}};
 }

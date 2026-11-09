@@ -1,7 +1,7 @@
-# 5525 セーブ管理室 v0.3.1
+# 5525 セーブ管理室 v0.4.0
 
 ローカルのネイティブ画面とCLIで使う、セーブ管理・クエスト検証ツールです。
-ブラウザ、Webサーバー、アカウント、ネット接続は不要。セーブを外部へ送信しません。
+初回のゲーム参照取得と更新にはインターネット接続が必要です。セーブの読込・編集・比較・保存はPC内で完結します。
 
 ## できること
 
@@ -13,8 +13,13 @@
 6. **人工QAを作る**: 実セーブを使わず22件の既定ケースを新規フォルダへ生成
 7. クラウド担当はGUIなしのCLIから、同じ検証・編集・比較を実行
 
-固定参照 `wildfire13/5525` の `36439cc4c6ab40e8e0a04f5e22b15d5b060e50a4` を基準に公式コードを同梱。手書きの類似計算ではありません。ゲーム本体は起動せず、保存/読込・能力計算コードを直接使います。
+## ゲームとの同期
 
+GUIの起動時に [5525 の main](https://github.com/wildfire13/5525) を確認し、セーブの読込・生成・検証に必要なルールとマスターDBを取得します。取得したファイルをコミットと照合し、動作検証が通った版をローカルキャッシュに保存します。書き出す形式はその版のゲームが決めます。ゲーム `4fb793e` では新規セーブ・編集後の保存ともにv3です。
+
+画面のSHAはその作業で使用しているゲームのコミットです。作業中の版は固定されます。更新に失敗したときは以前に取得できた版で作業を続けられます。初回でキャッシュがない場合は接続を回復してから再実行してください。
+
+CLIは前回の確認から24時間が経つと次の実行時に自動確認します。画面の「ゲーム更新を確認」から取得した新版は次回起動時に反映します。CLIからすぐに更新するには `python save_lab.py sync` を実行してください。キャッシュはユーザーのホーム下の `.cache/5525-save-lab` にあり、`SAVE_LAB_CACHE_DIR` で変更できます。取得済みの版をオフラインで使う場合は `SAVE_LAB_OFFLINE=1` を設定します。
 
 ## ③ クエスト時間・条件（v0.3.1）
 
@@ -32,7 +37,7 @@
 
 ### 時間追加の意味と固定参照版の差
 
-画面上部・タイトル・JSONに固定参照SHAを表示します。起動時にGitHubや最新のゲームを自動読込しません。v0.3.1では行商人の待機・到着案内と3件の依頼判断に追従しています。詳細な検証範囲は `notes/v0.3.1-verification.md` を参照してください。
+画面上部・タイトル・JSONに、使用中のゲームのSHAを表示します。v0.3.1では行商人の待機・到着案内と3件の依頼判断に追従しています。詳細な検証範囲は `notes/v0.3.1-verification.md` を参照してください。
 
 追加時間は時間条件を調べるための仮定であり、その時間の移動・回復・戦闘・所持品消費を再現しません。未受注の依頼を選ぶ場合は、現在時点で受注してから時間を追加します。ゲームの操作リプレイとして使用しないでください。
 
@@ -118,7 +123,7 @@ Node.jsがPATH上にない場合は、同じcmdで `set "SAVE_LAB_NODE=C:\実際
 
 Pythonが未導入の場合だけ、python.orgのWindows版（Tcl/Tk付き）とnodejs.orgのLTS版を用意してください。このツールはインストールやPC設定変更を自動実行しません。
 
-ソース同梱版です。単体EXEではなくPython/Node.jsが必要です。日本語表示にはWindows標準のYu Gothic UI/Meiryoなどを利用します。
+実行にはPythonとNode.jsが必要です。日本語表示にはWindows標準のYu Gothic UI/Meiryoなどを利用します。
 
 ## macOS / Linux
 
@@ -129,7 +134,7 @@ Tkや画面のない環境では下記CLIを使ってください。
 
 作業ディレクトリをこのフォルダへ移して実行します。JSON出力、エラー時終了コード2です。
 
-最初に `python3 save_lab.py doctor` を実行すると、Python・SQLite・Node.jsと人工サンプルの公式保存/再読込を一括確認できます。実セーブや画面を開かず、設定変更・インストールを行いません。`ok: true` なら終了コード0、失敗時は終了コード2で `checks` の失敗段階・`code`・`next_steps` を返します。未実行の検証は `not_run` です。診断には実行パスが含まれるため、公開しないでください。
+`python3 save_lab.py sync` で初回取得した後に `python3 save_lab.py doctor` を実行すると、Python・SQLite・Node.jsと人工サンプルの公式保存/再読込を一括確認できます。実セーブや画面を開かず診断します。`ok: true` なら終了コード0、失敗時は終了コード2で `checks` の失敗段階・`code`・`next_steps` を返します。未実行の検証は `not_run` です。診断には実行パスが含まれるため、公開しないでください。
 
 GUIの起動確認は別に `node launch.cjs --diagnose`、このツールの版確認は `python3 save_lab.py --version` です。
 
@@ -183,7 +188,7 @@ Godotが付加する `nativePortraits`、`godotCampaignId`、`godotFrontend` は
 - 画像は各辺1〜256px、base64は40万文字以下
 - ゲームが通常生成するPNGの基本チャンクを扱います。補助・拡張チャンク付きのPNGは、この試作では画像を変換せず読込を停止します
 - キャンペーンID・音楽設定は基準ゲームの形式に従って検証
-- 本体データは同梱公式validatorを変更せず検証
+- 本体データは取得した公式validatorで検証
 - 未対応の最上位項目や不正な付加情報は、削除して通すのではなく読込を停止
 - **このツールは立ち絵を含むファイル全体で1 MiB以下**。Godot本体の12 MiB上限より小さい制限を維持しています
 - PNG検証は追加パッケージ不要のローカル構造検証です。ゲーム本体の画像デコード・描画やGodot画面からの実ロードを保証するものではありません
@@ -199,6 +204,7 @@ Godotが付加する `nativePortraits`、`godotCampaignId`、`godotFrontend` は
 ## テスト
 
 ```sh
+python3 save_lab.py sync
 python3 -m unittest discover -s tests -v
 node tests/test_engine.cjs
 node tests/test_launcher.cjs
@@ -212,7 +218,7 @@ node tests/test_decisions_parity.cjs
 
 Windowsのsandboxなどでシンボリックリンク/ハードリンクのテスト用ファイルを作れない場合、該当する3項目（ハードリンク1・シンボリックリンク2）だけが理由付きの `SKIP` になります。製品の上書き禁止処理は変えていません。リンク対応環境では実リンクを使う検証が実行され、通常ファイルと原本の上書き拒否・排他的な新規作成の検証はリンク権限に関係なく実行します。`SKIP` は合格扱いではなく、その環境で未検証という意味です。
 
-同梱公式テストは `vendor/5525/native` で実行可能。過去版の実施結果は `notes/verification.md`、v0.3.0の検証範囲と限界は `notes/v0.3.0-verification.md`、この版は `notes/v0.3.1-verification.md` を参照。`notes/npc-qa-verification.md` と `notes/decisions-qa-verification.md` は隔離候補の検証履歴です。
+過去版の実施結果は `notes/verification.md`、v0.3.0の検証範囲と限界は `notes/v0.3.0-verification.md`、v0.3.1は `notes/v0.3.1-verification.md` を参照。`notes/npc-qa-verification.md` と `notes/decisions-qa-verification.md` は隔離候補の検証履歴です。
 
 ## 構成・共有元
 
@@ -225,7 +231,7 @@ Windowsのsandboxなどでシンボリックリンク/ハードリンクのテ�
 - `quest-timeline.cjs`: 独立コピーの時間・納品・経路検証
 - `timeline_ui.py`: ③専用の入力・結果・境界比較・予定表・前提表示
 - `qa-fixtures.cjs` / `qa_ui.py`: ④専用、入力セーブを受け取らない人工QA生成
-- `vendor/`: 固定版の公式コード、マスターDB、出典ハッシュ、生成サンプル
+- `game_source.py` と `game-source.cjs`：GitHubからの取得、キャッシュと使用中のゲーム版の解決
 - `examples/`: 人工サンプル・パッチ
 - `tests/`: ローカルファイル保護・エンジンの回帰テスト
 
@@ -236,4 +242,6 @@ Windowsのsandboxなどでシンボリックリンク/ハードリンクのテ�
 デザインは、情報密度・原本/作業コピーの区別・数値差分の読みやすさを優先。Damir Sokolovsky (@heydamir) のUnslopを参照。UnslopはCC BY 4.0、参照版 `1d13095e4bef6ad6c74f1dd828d84c4ba309a4dc`。
 https://github.com/heydamir/unslop/tree/1d13095e4bef6ad6c74f1dd828d84c4ba309a4dc/skills/unslop
 
-5525同梱ソースはユーザー所有リポジトリ由来です。このパッケージに第三者への公開ライセンスを追加していません。専用リポジトリへ置く際は所有権と公開範囲を確認してください。
+ゲーム側のソースは公式リポジトリから取得します。このパッケージに第三者への公開ライセンスを追加していません。専用リポジトリへ置く際は所有権と公開範囲を確認してください。
+
+[v0.4.0の同期・セーブ相互運用の検証結果](notes/v0.4.0-verification.md)

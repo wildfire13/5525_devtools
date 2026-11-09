@@ -1,9 +1,9 @@
 {
   "format": "5525-native-campaign",
-  "version": 2,
+  "version": 3,
   "cargoRevision": 1,
   "state": {
-    "version": 2,
+    "version": 3,
     "phase": "town",
     "location": "astaris",
     "gold": 180,

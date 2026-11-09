@@ -8,7 +8,7 @@ import tkinter as tk
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from ui import App
-from save_lab import engine,save_new
+from save_lab import TOOL_VERSION,engine,save_new
 root=tk.Tk();app=App(root);checks=[]
 output=Path(sys.argv[1]) if len(sys.argv)>1 else Path('notes/gui-qa-results.json')
 def check(name,condition):
@@ -24,7 +24,7 @@ def check_qa_rows(label):
 def run():
     success=False
     try:
-        check('fixed version and SHA visible in title','v0.3.1' in root.title() and json.loads((Path(__file__).resolve().parents[1]/'vendor/source-manifest.json').read_text(encoding='utf-8'))['sourceSha'][:8] in root.title())
+        check('active version and SHA visible in title',f'v{TOOL_VERSION}' in root.title() and app.catalog['sourceSha'][:8] in root.title())
         check('synthetic QA can open without importing any save',app.work.after is None and len(app.qa.catalog['cases'])==22)
         root.geometry('1000x720');app.tabs.select(app.qa.frame);root.update();check_qa_rows('QA first two rows visible before generation at 1000x720')
         with tempfile.TemporaryDirectory() as directory:

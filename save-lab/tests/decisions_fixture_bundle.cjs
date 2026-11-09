@@ -1,6 +1,7 @@
 // TEST ONLY: no imported saves, no file writes. The caller chooses a fresh output folder.
 'use strict';
-const C=require('../vendor/5525/native/campaign.js'),T=require('../quest-timeline.cjs'),assert=require('node:assert/strict');
+const {gameModule} = require('../game-source.cjs');
+const C=gameModule('campaign.js'),T=require('../quest-timeline.cjs'),assert=require('node:assert/strict');
 const bundle=require('./npc_fixture_bundle.cjs');const towns=['astaris','east','west','south','north'];
 const definitions=[
  ...[0,42].flatMap(epoch=>towns.flatMap(location=>[false,true].map(missingCargo=>({id:`decisions-wheel-expired-${location}-37h-epoch${epoch}${missingCargo?'-offparty':''}`,eventId:'wheel',origin:'east',location,age:37,epoch,missingCargo,mode:'accepted'})))),

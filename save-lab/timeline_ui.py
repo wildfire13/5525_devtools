@@ -1,7 +1,6 @@
 """Quest verification tab. All probes use a frozen copy, never Workspace edits."""
 from __future__ import annotations
 import copy
-import json
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from save_lab import engine, save_new, LabError

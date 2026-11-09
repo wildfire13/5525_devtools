@@ -1,8 +1,9 @@
 'use strict';
+const {gameModule} = require('../game-source.cjs');
 const assert=require('node:assert/strict');
-const C=require('../vendor/5525/native/campaign.js');
+const C=gameModule('campaign.js');
 const T=require('../quest-timeline.cjs');
-const manifest=require('../vendor/source-manifest.json');
+const manifest=require('../game-source.cjs');
 const clone=value=>JSON.parse(JSON.stringify(value));
 const saved=s=>JSON.parse(C.serialize(s));
 const porter=s=>C.view(s).roster.find(r=>r.job==='porter'&&s.selected.includes(r.id)).id;

@@ -10,6 +10,7 @@ import tempfile
 import unittest
 from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from road_fixture import road_save
 from save_lab import Workspace, LabError, engine, load_json, save_new, parse_json, ROOT
 
 
@@ -115,6 +116,18 @@ class LocalFiles(unittest.TestCase):
         work=Workspace(); work.open(self.source); before=copy.deepcopy(work.after)
         with self.assertRaises(LabError): work.apply({'gold':-1})
         self.assertEqual(work.after,before); self.assertEqual(work.undo_stack,[])
+    def test_failed_undo_or_reset_preserves_history_and_inspection(self):
+        work = Workspace()
+        work.open(self.source)
+        work.apply({'gold': 777})
+        expected = copy.deepcopy((work.after, work.info, work.undo_stack))
+        for operation in (work.undo, work.reset):
+            with self.subTest(operation=operation.__name__):
+                with mock.patch('save_lab.engine', side_effect=LabError('inspection failed')):
+                    with self.assertRaises(LabError):
+                        operation()
+                self.assertEqual((work.after, work.info, work.undo_stack), expected)
+
     def test_undo_reset(self):
         work=Workspace(); work.open(self.source); work.apply({'gold':777}); work.undo()
         self.assertEqual(work.after,self.sample)
@@ -126,7 +139,9 @@ class LocalFiles(unittest.TestCase):
         large=self.dir/'large.json';large.write_bytes(b' '*(1024*1024+1))
         with self.assertRaises(LabError): load_json(large)
     def test_readonly_road(self):
-        work=Workspace();work.open(ROOT/'vendor/generated-fixtures/road-readonly.json')
+        path = self.dir / 'road.json'
+        save_new(path, road_save())
+        work=Workspace();work.open(path)
         self.assertFalse(work.info['summary']['editable'])
         with self.assertRaises(LabError):work.apply({'gold':99})
     def test_cli_edit_and_revalidate(self):

@@ -1,6 +1,7 @@
 'use strict';
+const {gameModule} = require('../game-source.cjs');
 const assert=require('node:assert/strict'),path=require('node:path'),fs=require('node:fs');
-const C=require('../vendor/5525/native/campaign.js'),T=require('../quest-timeline.cjs'),E=require('../engine.cjs');
+const C=gameModule('campaign.js'),T=require('../quest-timeline.cjs'),E=require('../engine.cjs');
 const G=process.env.EXACT_GAME_ROOT?require(path.join(process.env.EXACT_GAME_ROOT,'native/campaign.js')):C;
 const towns=['astaris','east','west','south','north'],saved=s=>JSON.parse(C.serialize(s));
 function at(s,age,place){s.worldTime=s.standaloneEvents.epoch+age;s.hours=s.worldTime;s.location=place;C.view(s);return s;}

@@ -1,18 +1,15 @@
 'use strict';
+const {verifyRoundtrip} = require('./save-validation.cjs');
+const {gameModule, sourceSha, repository} = require('./game-source.cjs');
 // Read-only probes over independent copies. Never return an importable save.
-const C = require('./vendor/5525/native/campaign.js');
-const J = require('./vendor/5525/native/journey.js');
+const C = gameModule('campaign.js');
+const J = gameModule('journey.js');
 const Envelope = require('./metadata-envelope.cjs');
-const manifest = require('./vendor/source-manifest.json');
 const clone = value => JSON.parse(JSON.stringify(value));
 const fail = message => { throw new Error(message); };
 const place = id => C.locations.find(p => p.id === id)?.name || id || '移動中・出発済み';
-function verified(s) {
-  const validation = C.validate(s);
-  if (!validation.ok) fail(validation.error);
-  const raw = C.serialize(s), again = C.deserialize(raw);
-  if (C.serialize(again) !== raw) fail('検証コピーの再読込で差分が生じました');
-  return again;
+function verified(state) {
+  return verifyRoundtrip(state, '検証コピーの再読込で差分が生じました').reloaded;
 }
 function options(value = {}) {
   if (!value || typeof value !== 'object' || Array.isArray(value) || Object.getPrototypeOf(value) !== Object.prototype || Object.getOwnPropertySymbols(value).length) fail('options must be a plain object');
@@ -44,7 +41,7 @@ function delivery(s) {
   const result = clone(probe.result), available = result.outcome !== 'failed';
   return {available, actionAccepted:true, reason:available ? result.outcome === 'late' ? '納品可能・基本報酬' : '納品可能・希望条件達成' : '失敗処理・受注前へ復元（世界時刻は維持）', result};
 }
-// These are observed stage/settlement disagreements, not overrides of the vendor.
+// These are observed stage/settlement disagreements, not overrides of the game rules.
 function discrepancies(s, view, settlement) {
   if (!settlement.actionAccepted || !settlement.available) return [];
   const eventId = s.activeQuest?.eventId, age = s.worldTime-s.standaloneEvents.epoch;
@@ -115,7 +112,7 @@ function timeline(save, suppliedOptions) {
   if (['deployment','battle'].includes(current.phase)) warnings.push('戦闘準備・戦闘中は時刻と依頼条件の確認のみです。勝敗や残り戦闘時間は予測しません。');
   const selectedId = q?.id || null;
   return {
-    schemaVersion:1, sourceSha:manifest.sourceSha, sourceUrl:`https://github.com/${manifest.repository}/blob/${manifest.sourceSha}/native/campaign.js`,
+    schemaVersion:1, sourceSha, sourceUrl:`https://github.com/${repository}/blob/${sourceSha}/native/campaign.js`,
     copyOnly:true, original, options:clone(opt),
     clock:{worldTime:current.worldTime, elapsedHours:current.hours, calendarEpoch:current.standaloneEvents.epoch, calendarAge:age, journeyHours:current.journey?.hours || 0, questHours:q ? (q.elapsedHours || 0)+(current.journey?.hours || 0) : null},
     state:{phase:current.phase,location:current.location,locationName:place(current.location),journeyDestination:current.journey?.destination || null,scenarioStages:clone(view.scenarioStages)},
@@ -128,7 +125,7 @@ function timeline(save, suppliedOptions) {
     calendar:{epoch:current.standaloneEvents.epoch,events:clone(current.standaloneEvents.events),
       schedule:[{at:10, label:'行商人がアスタリスに到着', detail:'10以上・18未満で受取'}, {at:18,label:'行商人がサウスへ / カブの希望条件',detail:'行商人は18以上・36以下。カブは18ちょうどまで'}, {at:20,label:'最後の窯の希望条件',detail:'20以上・21未満はclosed表示ですが、20ちょうどまで納品成功'}, {at:21,label:'窯の段階表示: 焼成',detail:'21以上・22未満はfired。納品期限は20以下のため、21以降は納品先で失敗処理'}, {at:22,label:'窯の段階表示: 冷却',detail:'22以上・23未満はcooling。時刻のみの段階表示であり、納品成功を意味しません'}, {at:23,label:'窯の段階表示: 返却',detail:'23以上はreturned。窯焚きの後日談は依頼完了済み・23以上・現在地イースの場合のみ表示'}, {at:24,label:'車輪の希望条件',detail:'24ちょうどはsouth_full・満額220G、超過後はsouth_late・110G'}, {at:36,label:'車輪の受取最終時刻',detail:'36ちょうどはsouth_late・110G。超過後はdeparted、どの町でも確認後に失敗処理'}, {at:37,label:'未受注の荷車のあと',detail:'未受注・募集終了（missed）でサウスにいる場合のみ表示。受注済みの失敗とは別'}]},
     assumptions:[
-      `公式ゲームの固定参照 ${manifest.sourceSha} に基づく検証です。別SHAのゲームの動作は保証しません。`,
+      `公式ゲームの固定参照 ${sourceSha} に基づく検証です。別SHAのゲームの動作は保証しません。`,
       '到着直後と待機後は別々の独立コピーで実処理を確認します。待機だけでは自動納品・報酬受取・回復を行いません。',
       '検証コピーのみで受注・時刻追加・出発を仮定し、原本A・作業B・実ファイルは変更しません。コピーをゲームのセーブとして書き出す機能はありません。',
       '追加時間は時間条件だけを調べる仮定です。移動、回復、戦闘や所持品消費を再現しません。受注を選んだ場合はコピーで受注してから追加します。',

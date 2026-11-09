@@ -1,12 +1,13 @@
 """Native Tk interface. No browser, web server, or third-party UI dependencies."""
 from __future__ import annotations
-import json
+import queue
+import threading
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, font
-from pathlib import Path
 from timeline_ui import TimelinePanel
 from qa_ui import QAPanel
-from save_lab import Workspace, LabError, engine, save_new, configured_save_directory, TOOL_VERSION
+from save_lab import (Workspace, LabError, engine, save_new, configured_save_directory, TOOL_VERSION,
+                      ensure_pinned_source, source_state, sync_source_now, offline_mode)
 
 BG = '#f4f4f5'
 INK = '#202124'
@@ -23,15 +24,20 @@ class App:
         self.initial_directory = configured_save_directory()
         self.member_id = None
         self.catalog = engine('catalog')
+        self.game_source = source_state() or {}
+        self.sync_queue = queue.Queue()
+        self.pinned_sha = self.catalog.get('sourceSha') or self.game_source.get('sha') or 'unknown'
+        self.next_sha = self.game_source.get('next_sha') or self.pinned_sha
         self.gear = {x['id']: x for x in self.catalog['gear']}
         self.refreshing = False
         self.form_dirty = False
-        self.root.title(f'5525 セーブ管理室 v{TOOL_VERSION} | 固定参照 {self.catalog["sourceSha"][:8]}')
+        self.root.title(f'5525 セーブ管理室 v{TOOL_VERSION} | 使用中 {self.pinned_sha[:8]}')
         self.root.geometry('1320x900')
         self.root.minsize(1000, 720)
         self.root.configure(bg=BG)
         self.style()
         self.build()
+        self.show_source_status()
         self.root.protocol('WM_DELETE_WINDOW', self.close)
         self.root.bind('<Control-o>', lambda _: self.open_file())
         self.root.bind('<Control-Shift-S>', lambda _: self.export())
@@ -48,6 +54,7 @@ class App:
         s.configure('TFrame', background=BG)
         s.configure('TLabel', background=BG, foreground=INK)
         s.configure('Muted.TLabel', foreground=MUTED)
+        s.configure('Warning.TLabel', foreground='#8a4b08')
         s.configure('Title.TLabel', font=(family, 22))
         s.configure('Sub.TLabel', font=(family, 13))
         s.configure('TButton', padding=(12, 8))
@@ -66,13 +73,17 @@ class App:
         outer = ttk.Frame(self.root, padding=16); outer.pack(fill='both', expand=True)
         top = ttk.Frame(outer); top.pack(fill='x')
         ttk.Label(top, text='5525 セーブ管理室', style='Title.TLabel').pack(side='left')
-        ttk.Label(top, text=f'v{TOOL_VERSION}  /  原本保護  /  固定参照 {self.catalog["sourceSha"][:8]}', style='Muted.TLabel').pack(side='left', padx=24)
+        ttk.Label(top, text=f'v{TOOL_VERSION}  /  原本保護  /  使用中 {self.pinned_sha[:8]}', style='Muted.TLabel').pack(side='left', padx=24)
         self.export_button = ttk.Button(top, text='Bを別名保存', style='Accent.TButton', command=self.export, state='disabled'); self.export_button.pack(side='right')
+        self.source_notice = tk.StringVar()
+        self.source_notice_label = ttk.Label(outer, textvariable=self.source_notice, style='Muted.TLabel', wraplength=1180)
+        self.source_notice_label.pack(anchor='w', pady=(8, 0))
         tools = ttk.Frame(outer); tools.pack(fill='x', pady=(16, 12))
         ttk.Button(tools, text='セーブを開く', command=self.open_file).pack(side='left')
         ttk.Button(tools, text='公式サンプルを作成', command=self.sample).pack(side='left', padx=8)
         self.undo_button = ttk.Button(tools, text='ひとつ戻す', command=self.undo, state='disabled'); self.undo_button.pack(side='left', padx=(16, 8))
         self.reset_button = ttk.Button(tools, text='Aからやり直す', command=self.reset, state='disabled'); self.reset_button.pack(side='left')
+        self.update_button = ttk.Button(tools, text='ゲーム更新を確認', command=self.check_update); self.update_button.pack(side='right')
         self.source = tk.StringVar(value='原本A  未読込')
         self.source_label = ttk.Label(outer, textvariable=self.source, style='Muted.TLabel', wraplength=1180); self.source_label.pack(anchor='w')
         self.summary = tk.StringVar(value='セーブの状態・メンバー・装備を読み込み後に表示します')
@@ -81,7 +92,7 @@ class App:
         self.notice_label = ttk.Label(outer, textvariable=self.notice, style='Muted.TLabel', wraplength=1180); self.notice_label.pack(anchor='w', pady=(0, 16))
         self.status = tk.StringVar()
         self.status_label = ttk.Label(outer, textvariable=self.status, style='Muted.TLabel', wraplength=1100); self.status_label.pack(side='bottom', anchor='w', pady=(12, 0))
-        outer.bind('<Configure>', lambda event: [label.configure(wraplength=max(240, event.width-32)) for label in (self.source_label, self.summary_label, self.notice_label, self.status_label)])
+        outer.bind('<Configure>', lambda event: [label.configure(wraplength=max(240, event.width-32)) for label in (self.source_notice_label, self.source_label, self.summary_label, self.notice_label, self.status_label)])
         self.tabs = ttk.Notebook(outer); self.tabs.pack(fill='both', expand=True)
         edit = ttk.Frame(self.tabs, padding=16)
         compare = ttk.Frame(self.tabs, padding=16)
@@ -142,6 +153,70 @@ class App:
         self.details = tk.Text(raw, wrap='word', bg='white', fg=INK, relief='flat', padx=16, pady=16, state='disabled')
         self.details.pack(fill='both', expand=True)
         self.set_editable(False)
+
+    def show_source_status(self):
+        state = self.game_source or {}
+        origin = {'sync': '起動時に最新確認', 'cache': '検証済みキャッシュ',
+                  'env': '指定ソース', 'bootstrap': '初回準備'}.get(state.get('origin'), '検証済みソース')
+        style = 'Muted.TLabel'
+        text = f'ゲームソース: {origin} / 使用中 {self.pinned_sha[:8]}。更新確認は起動時に1回だけ行います'
+        if state.get('warning'):
+            text = f'ゲームソース: {origin} / 使用中 {self.pinned_sha[:8]}。{state["warning"]}'
+            style = 'Warning.TLabel'
+        elif offline_mode():
+            text = f'ゲームソース: {origin} / 使用中 {self.pinned_sha[:8]}。自動更新はオフライン指定です'
+        if state.get('revision_changed'):
+            text += f' / 次回起動 {state["next_sha"][:8]}'
+            style = 'Warning.TLabel'
+        self.source_notice.set(text)
+        self.source_notice_label.configure(style=style)
+
+    def check_update(self):
+        if offline_mode():
+            text = f'オフライン指定 (SAVE_LAB_OFFLINE=1) のためゲーム更新を確認しません。使用中 {self.pinned_sha[:8]}'
+            self.source_notice.set(text)
+            self.source_notice_label.configure(style='Muted.TLabel')
+            messagebox.showinfo('オフライン指定', text + '\nオンラインで更新する場合は SAVE_LAB_OFFLINE を解除して再起動してください', parent=self.root)
+            return
+        self.update_button.configure(state='disabled')
+        self.status.set('ゲーム更新を確認しています...')
+        threading.Thread(target=self._sync_worker, daemon=True).start()
+        self.root.after(100, self._poll_sync)
+
+    def _sync_worker(self):
+        try:
+            self.sync_queue.put((sync_source_now(), None))
+        except (LabError, OSError, ValueError) as exc:
+            self.sync_queue.put((None, exc))
+
+    def _poll_sync(self):
+        try:
+            result, exc = self.sync_queue.get_nowait()
+        except queue.Empty:
+            self.root.after(100, self._poll_sync)
+        else:
+            self.finish_update(result, exc)
+
+    def finish_update(self, result, exc):
+        self.update_button.configure(state='normal')
+        if exc is not None:
+            self.source_notice.set(f'ゲーム更新を確認できませんでした。使用中 {self.pinned_sha[:8]} のままです。{exc}')
+            self.source_notice_label.configure(style='Warning.TLabel')
+            self.status.set('最新確認に失敗しました。作業Bと使用中のソースは変更していません')
+            messagebox.showwarning('ゲーム更新を確認できません', f'{exc}\n\n作業中の内容と使用中のソースは変更していません。「python save_lab.py doctor」も確認してください', parent=self.root)
+            return
+        self.next_sha = result.get('nextSha') or result.get('sourceSha') or self.pinned_sha
+        if self.next_sha != self.pinned_sha:
+            text = f'ゲーム更新: 次回起動で {self.next_sha[:8]} を使用します。使用中は {self.pinned_sha[:8]} のままです'
+            self.source_notice_label.configure(style='Warning.TLabel')
+        else:
+            text = f'ゲーム更新: 使用中 {self.pinned_sha[:8]} が最新です'
+            self.source_notice_label.configure(style='Muted.TLabel')
+        if not result.get('published', True):
+            text += ' / 次回起動用の公開を確認できません'
+            self.source_notice_label.configure(style='Warning.TLabel')
+        self.source_notice.set(text)
+        self.status.set('ゲーム更新を確認しました。作業Bと使用中のソースは変更していません。反映は次回起動時です')
 
     def tree(self, parent, cols, height):
         box = ttk.Frame(parent); box.pack(fill='both', expand=True)
@@ -208,7 +283,8 @@ class App:
         self.export_button.configure(state='normal')
         self.undo_button.configure(state='normal' if self.work.undo_stack else 'disabled')
         self.reset_button.configure(state='normal' if self.work.undo_stack else 'disabled')
-        self.refresh_compare()
+        self.comparison = self.work.compare()
+        self.render_comparison()
         self.timeline.invalidate()
         self.form_dirty = False; self.refreshing = False
 
@@ -217,7 +293,7 @@ class App:
         if self.refreshing or not selection or selection[0] == self.member_id: return
         if self.form_dirty and not messagebox.askyesno('未反映の入力', '入力中の値を破棄し、別のメンバーを表示しますか', parent=self.root):
             self.members.selection_set(self.member_id); return
-        self.member_id = selection[0]; self.refreshing = True; self.gold.set(str(self.work.info['summary']['gold'])); self.load_member(); self.form_dirty = False; self.refreshing = False; self.refresh_compare()
+        self.member_id = selection[0]; self.refreshing = True; self.gold.set(str(self.work.info['summary']['gold'])); self.load_member(); self.form_dirty = False; self.refreshing = False; self.render_comparison()
 
     def load_member(self):
         m = next(x for x in self.work.info['members'] if x['id'] == self.member_id)
@@ -239,11 +315,6 @@ class App:
             else: var.set('')
             box.configure(values=choices)
 
-    def apply_gold(self):
-        def action():
-            self.work.apply({'gold': int(self.gold.get())}); self.refresh(); self.status.set('作業Bの所持金を反映しました。公式再読込検証に合格')
-        self.guard(action)
-
     def apply_member(self):
         def action():
             values = {key: int(var.get()) for key, var in self.fields.items()}
@@ -253,8 +324,8 @@ class App:
             self.work.apply({'gold': int(self.gold.get()), 'characters': {self.member_id: patch}}); self.refresh(); self.status.set('作業Bに反映しました。装備条件・成長整合性・公式再読込検証に合格')
         self.guard(action)
 
-    def refresh_compare(self):
-        report = self.work.compare()
+    def render_comparison(self):
+        report = self.comparison
         for child in self.compare_tree.get_children(): self.compare_tree.delete(child)
         def show(value):
             return str(value) if value is not None else '—'
@@ -319,12 +390,36 @@ class App:
     def close(self):
         if self.discard_ok(): self.root.destroy()
 
+def source_error_message(exc):
+    return (f'{exc}\n\n'
+            'ゲームソースを準備できませんでした。\n'
+            'ネット接続を確認し、次のコマンドで検証済みソースを取得してください。\n'
+            '  python save_lab.py sync\n\n'
+            '配布物とキャッシュを確認する場合:\n'
+            '  python save_lab.py doctor\n\n'
+            '検証済みキャッシュをオフラインで使う場合は SAVE_LAB_OFFLINE=1 を設定して再起動してください。')
+
 def run_gui():
     try:
         root = tk.Tk()
     except tk.TclError as exc:
         raise LabError('画面を開けません。GUIのないクラウド担当はCLIを使用してください') from exc
-    try: App(root)
+    try:
+        # One automatic main check per normal GUI launch, before any catalog.
+        ensure_pinned_source(auto_sync=True, ttl=False)
+    except (LabError, OSError, ValueError) as exc:
+        root.withdraw()
+        messagebox.showerror('ゲームソースを準備できません', source_error_message(exc), parent=root)
+        root.destroy()
+        raise
+    try:
+        App(root)
+    except (LabError, OSError, ValueError) as exc:
+        root.withdraw()
+        messagebox.showerror('セーブ管理室を開けません',
+                             f'{exc}\n\n「python save_lab.py doctor」で環境を確認してください', parent=root)
+        root.destroy()
+        raise
     except Exception:
         root.destroy(); raise
     root.mainloop()
