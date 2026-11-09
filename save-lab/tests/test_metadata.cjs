@@ -1,4 +1,5 @@
 'use strict';
+const {gameModule} = require('../game-source.cjs');
 
 // Public regression data is generated only from deterministic artificial pixels.
 // Do not replace these fixtures with a player's save or portrait.
@@ -6,7 +7,7 @@ const assert = require('node:assert/strict');
 const {createHash} = require('node:crypto');
 const zlib = require('node:zlib');
 const E = require('../engine.cjs');
-const C = require('../vendor/5525/native/campaign.js');
+const C = gameModule('campaign.js');
 
 const clone = value => JSON.parse(JSON.stringify(value));
 const metadataKeys = ['nativePortraits', 'godotCampaignId', 'godotFrontend'];

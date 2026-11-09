@@ -1,7 +1,8 @@
 'use strict';
+const {gameModule} = require('../game-source.cjs');
 const assert=require('node:assert/strict');
 const E=require('../engine.cjs');
-const C=require('../vendor/5525/native/campaign.js');
+const C=gameModule('campaign.js');
 let passed=0;function test(name,fn){fn();console.log('PASS '+name);passed++;}
 const bundle=E.run({cmd:'qa-fixtures'});
 test('22 deterministic presets use official validator and exact roundtrip',()=>{

@@ -1,8 +1,9 @@
 'use strict';
+const {gameModule} = require('../game-source.cjs');
 const assert=require('node:assert/strict');
 const {spawnSync}=require('node:child_process');
 const path=require('node:path');
-const E=require('../engine.cjs'),C=require('../vendor/5525/native/campaign.js');
+const E=require('../engine.cjs'),C=gameModule('campaign.js');
 let count=0;function test(name,fn){fn();console.log('PASS '+name);count++;}
 const fresh=()=>E.run({cmd:'new'}),edit=(s,p)=>E.run({cmd:'edit',save:s,patch:p});
 test('current save strict official roundtrip',()=>{const s=fresh();assert.deepEqual(E.run({cmd:'normalize',save:s}),{save:s,migrated:false,warnings:[]});assert.equal(C.validate(C.deserialize(s)).ok,true);});

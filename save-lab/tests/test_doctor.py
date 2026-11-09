@@ -10,22 +10,49 @@ import socket
 import sqlite3
 import subprocess
 import sys
+import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+# The whole suite stays offline; individual tests can override this.
+os.environ.setdefault('SAVE_LAB_OFFLINE', '1')
+import game_source  # noqa: F401  (co-shipped first-party module)
 import save_lab
 
 
 class Doctor(unittest.TestCase):
     SOURCE_COMMIT = 'a' * 40
     SAMPLE = {'version': 1, 'state': {'gold': 0}}
-    CHECK_NAMES = {'python_version', 'sqlite_json', 'node_version', 'engine_roundtrip'}
+    CHECK_NAMES = {'python_version', 'sqlite_json', 'game_source', 'node_version', 'engine_roundtrip'}
 
     def setUp(self):
-        self.environment = patch.dict(os.environ, {'SAVE_LAB_NODE': 'test-node'})
+        save_lab.reset_source_pin()
+        self.addCleanup(save_lab.reset_source_pin)
+        self.real_cached = game_source.cached_source()
+        self.environment = patch.dict(os.environ, {
+            'SAVE_LAB_NODE': 'test-node', 'SAVE_LAB_SOURCE_DIR': '',
+            'SAVE_LAB_OFFLINE': '1',
+        })
         self.environment.start()
         self.addCleanup(self.environment.stop)
+        self.cache = tempfile.TemporaryDirectory()
+        self.addCleanup(self.cache.cleanup)
+        self.source_path = Path(self.cache.name) / self.SOURCE_COMMIT
+        self.source_path.mkdir()
+        self.cache_patch = patch.object(save_lab.game_source, 'cache_directory',
+                                        return_value=Path(self.cache.name))
+        self.cache_patch.start()
+        self.addCleanup(self.cache_patch.stop)
+        self.cached_patch = patch.object(save_lab.game_source, 'cached_source',
+                                         return_value=self.source_path)
+        self.cached_patch.start()
+        self.addCleanup(self.cached_patch.stop)
+        # Doctor must never sync. A stray call fails the test immediately.
+        self.sync_mock = MagicMock(side_effect=AssertionError('Doctor must not sync'))
+        self.sync_patch = patch.object(save_lab.game_source, 'sync_source', self.sync_mock)
+        self.sync_patch.start()
+        self.addCleanup(self.sync_patch.stop)
         self.calls = []
 
     def fake_runtime(self, argv, **options):
@@ -37,6 +64,7 @@ class Doctor(unittest.TestCase):
             return subprocess.CompletedProcess(argv, 0, 'v18.0.0\n', '')
         self.assertEqual(argv[1:], [str(save_lab.ROOT / 'engine.cjs')])
         self.assertEqual(options['env']['NATIVE5525_PYTHON'], sys.executable)
+        self.assertEqual(options['env']['SAVE_LAB_SOURCE_DIR'], str(self.source_path))
         request = json.loads(options['input'])
         if request['cmd'] == 'new':
             self.assertEqual(request, {'cmd': 'new'})
@@ -51,7 +79,7 @@ class Doctor(unittest.TestCase):
             self.fail('Doctor must only generate, normalize, and inspect an artificial sample')
         return subprocess.CompletedProcess(argv, 0, json.dumps({'ok': True, 'result': result}), '')
 
-    def assert_report(self, report, ok):
+    def assert_report(self, report, ok, source_sha=None):
         self.assertEqual(report['schema_version'], 1)
         self.assertEqual(report['tool'], '5525 Save Lab')
         self.assertEqual(report['version'], save_lab.TOOL_VERSION)
@@ -64,12 +92,18 @@ class Doctor(unittest.TestCase):
         self.assertEqual(set(report['runtimes']['node']), {'executable', 'version'})
         self.assertEqual(report['gui'], {'tested': False, 'next_step': 'node launch.cjs --diagnose'})
         self.assertIs(report['constraints']['network_requests'], False)
+        self.assertEqual(report['constraints']['network_policy']['doctor'], 'no network access')
+        self.assertEqual(report['constraints']['network_policy']['skip_automatic_sync'], 'SAVE_LAB_OFFLINE=1')
         self.assertIs(report['constraints']['overwrites_existing_files'], False)
         self.assertIsInstance(report['next_steps'], list)
+        self.assertEqual(set(report['source']), {'sha', 'directory', 'origin', 'warning',
+                                                 'next_sha', 'revision_changed', 'offline', 'cache'})
         self.assertEqual(json.loads(json.dumps(report, allow_nan=False)), report)
         if ok:
             self.assertTrue(all(item['status'] == 'pass' for item in report['checks']))
+            self.assertEqual(report['source']['sha'], source_sha or self.SOURCE_COMMIT)
             self.assertRegex(report['source_commit'], r'^[0-9a-f]{40}$')
+            self.assertEqual(report['source_commit'], report['source']['sha'])
             self.assertEqual(report['next_steps'], [])
         else:
             self.assertTrue(any(item['status'] == 'fail' for item in report['checks']))
@@ -86,11 +120,14 @@ class Doctor(unittest.TestCase):
         return status, json.loads(output.getvalue())
 
     def test_real_headless_cli_succeeds(self):
+        if self.real_cached is None:
+            self.skipTest('run python save_lab.py sync before integration tests')
         env = os.environ.copy()
         env.pop('SAVE_LAB_NODE', None)
         env.pop('DISPLAY', None)
         env.pop('WAYLAND_DISPLAY', None)
         env['PYTHONDONTWRITEBYTECODE'] = '1'
+        env['SAVE_LAB_OFFLINE'] = '1'
         # A missing save location must not matter: doctor does not open saves.
         env['SAVE_LAB_SAVE_DIR'] = str(save_lab.ROOT / 'not-a-real-user-save-directory')
         result = subprocess.run(
@@ -99,10 +136,10 @@ class Doctor(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, f'stdout: {result.stdout!r}\nstderr: {result.stderr!r}')
         self.assertEqual(result.stderr, '')
-        self.assert_report(json.loads(result.stdout), True)
+        self.assert_report(json.loads(result.stdout), True, source_sha=self.real_cached.name)
 
     def test_real_cli_version_does_not_require_node(self):
-        self.assertEqual(save_lab.TOOL_VERSION, '0.3.1')
+        self.assertEqual(save_lab.TOOL_VERSION, '0.4.0')
         env = os.environ.copy()
         env['SAVE_LAB_NODE'] = 'not-an-installed-node-executable'
         env['PYTHONDONTWRITEBYTECODE'] = '1'
@@ -254,6 +291,19 @@ class Doctor(unittest.TestCase):
         self.assertEqual(self.check(report, 'engine_roundtrip')['status'], 'not_run')
         engine.assert_not_called()
 
+    def test_no_cache_is_actionable_and_skips_engine(self):
+        with patch.object(save_lab.game_source, 'cached_source', return_value=None), \
+                patch.object(save_lab, 'engine') as engine:
+            status, report = self.call_main()
+        self.assertEqual(status, 2)
+        self.assert_report(report, False)
+        self.assertEqual(self.check(report, 'game_source')['code'], 'game_source_unavailable')
+        self.assertIsNone(report['source']['sha'])
+        self.assertEqual(self.check(report, 'engine_roundtrip')['status'], 'not_run')
+        self.assertTrue(any('sync' in step for step in report['next_steps']))
+        engine.assert_not_called()
+        self.sync_mock.assert_not_called()
+
     def test_doctor_does_not_open_save_files_write_files_import_gui_or_use_network(self):
         original_import = builtins.__import__
 
@@ -274,6 +324,7 @@ class Doctor(unittest.TestCase):
                 stack.enter_context(patch.object(target, name, side_effect=AssertionError(f'Unexpected access: {name}')))
             report = save_lab.doctor()
         self.assert_report(report, True)
+        self.sync_mock.assert_not_called()
 
 
 if __name__ == '__main__':

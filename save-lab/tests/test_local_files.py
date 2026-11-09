@@ -10,6 +10,7 @@ import tempfile
 import unittest
 from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from road_fixture import road_save
 from save_lab import Workspace, LabError, engine, load_json, save_new, parse_json, ROOT
 
 
@@ -126,7 +127,9 @@ class LocalFiles(unittest.TestCase):
         large=self.dir/'large.json';large.write_bytes(b' '*(1024*1024+1))
         with self.assertRaises(LabError): load_json(large)
     def test_readonly_road(self):
-        work=Workspace();work.open(ROOT/'vendor/generated-fixtures/road-readonly.json')
+        path = self.dir / 'road.json'
+        save_new(path, road_save())
+        work=Workspace();work.open(path)
         self.assertFalse(work.info['summary']['editable'])
         with self.assertRaises(LabError):work.apply({'gold':99})
     def test_cli_edit_and_revalidate(self):

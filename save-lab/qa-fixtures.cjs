@@ -1,10 +1,10 @@
 'use strict';
+const {gameModule, sourceSha, repository} = require('./game-source.cjs');
 // Synthetic QA is deliberately separate from imported saves and timeline reports.
-const C = require('./vendor/5525/native/campaign.js');
+const C = gameModule('campaign.js');
 const Timeline = require('./quest-timeline.cjs');
-const manifest = require('./vendor/source-manifest.json');
 const fail = message => { throw new Error(message); };
-const source = () => ({sourceSha:manifest.sourceSha,sourceUrl:`https://github.com/${manifest.repository}/blob/${manifest.sourceSha}/native/campaign.js`});
+const source = () => ({sourceSha,sourceUrl:`https://github.com/${repository}/blob/${sourceSha}/native/campaign.js`});
 const definitions = [
   ...[['turnip','north','astaris',[17,18,19]],['kiln','astaris','east',[19,20,21,22,23]],['wheel','east','astaris',[9,10,17]],['wheel','east','south',[18,23,24,25,35,36,37]]].flatMap(([eventId,origin,location,ages]) => ages.map(age => ({id:`${eventId}-accepted-${age}h`,eventId,origin,location,age,mode:'accepted',label:`${{turnip:'カブ',kiln:'最後の窯',wheel:'車輪'}[eventId]} / 受注中 / ${age}h`}))),
   ...[['turnip','north'],['kiln','astaris'],['wheel','east']].map(([eventId,location])=>({id:`${eventId}-offered-0h`,eventId,origin:location,location,age:0,mode:'offered',label:`${{turnip:'カブ',kiln:'最後の窯',wheel:'車輪'}[eventId]} / 未受注 / 0h`})),
