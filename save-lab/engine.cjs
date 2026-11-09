@@ -1,14 +1,14 @@
 'use strict';
-// Local-only adapter. The vendor engine is pinned, unmodified source.
-const C=require('./vendor/5525/native/campaign.js');
-const B=require('./vendor/5525/native/campaign-battle.js');
-const S=require('./vendor/5525/native/equipment-slots.js');
-const E=require('./vendor/5525/native/equipment-skills.js');
+const {gameModule, sourceSha} = require('./game-source.cjs');
+// Each invocation uses the verified game revision selected for this workspace.
+const C=gameModule('campaign.js');
+const B=gameModule('campaign-battle.js');
+const S=gameModule('equipment-slots.js');
+const E=gameModule('equipment-skills.js');
 const {isDeepStrictEqual}=require('node:util');
 const Envelope=require('./metadata-envelope.cjs');
 const Timeline=require('./quest-timeline.cjs');
 const QA=require('./qa-fixtures.cjs');
-const sourceSha=require('./vendor/source-manifest.json').sourceSha;
 const fail=m=>{throw new Error(m)};
 function record(v,label){if(!v||typeof v!=='object'||Array.isArray(v)||Object.getPrototypeOf(v)!==Object.prototype)fail(label+' must be an object');}
 function keys(v,allowed,label){record(v,label);for(const k of Object.keys(v))if(!allowed.includes(k))fail(label+': unsupported key '+k);}

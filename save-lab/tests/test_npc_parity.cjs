@@ -1,6 +1,7 @@
 'use strict';
+const {gameModule} = require('../game-source.cjs');
 const assert=require('node:assert/strict'),path=require('node:path');
-const C=require('../vendor/5525/native/campaign.js'),T=require('../quest-timeline.cjs'),E=require('../engine.cjs');
+const C=gameModule('campaign.js'),T=require('../quest-timeline.cjs'),E=require('../engine.cjs');
 const G=process.env.EXACT_GAME_ROOT?require(path.join(process.env.EXACT_GAME_ROOT,'native/campaign.js')):C;
 const clone=x=>structuredClone(x),saved=s=>JSON.parse(C.serialize(s));
 function accepted(age=0,place='east',epoch=0){const s=C.create();s.location='east';s.worldTime=epoch;s.standaloneEvents.epoch=epoch;assert(C.accept(s,'standalone-wheel',C.view(s).roster.find(r=>r.job==='porter'&&s.selected.includes(r.id)).id));s.worldTime=epoch+age;s.hours=age;s.activeQuest.elapsedHours=age;s.location=place;return C.deserialize(C.serialize(s));}

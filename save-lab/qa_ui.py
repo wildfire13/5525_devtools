@@ -30,7 +30,7 @@ class QAPanel:
         inner = self.canvas.create_window((0, 0), window=self.body, anchor='nw')
         self.body.bind('<Configure>', lambda _: self.canvas.configure(scrollregion=self.canvas.bbox('all')))
         self.canvas.bind('<Configure>', lambda event: self.canvas.itemconfigure(inner, width=event.width))
-        self.reference = ttk.Label(self.body, text=f'固定参照 {self.catalog["sourceSha"]}  /  別SHAのゲームは未検証', style='Muted.TLabel', wraplength=900)
+        self.reference = ttk.Label(self.body, text=f'使用中 {self.catalog["sourceSha"]}  /  更新は次回起動時に反映', style='Muted.TLabel', wraplength=900)
         bar = ttk.Frame(self.body); bar.pack(fill='x', pady=(0, 4))
         ttk.Label(bar, text='生成するケースを選択 / Ctrl・Shiftで複数選択', style='Muted.TLabel').pack(side='left')
         ttk.Button(bar, text='全件を選択', command=self.select_all).pack(side='right')

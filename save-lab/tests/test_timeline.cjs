@@ -1,8 +1,9 @@
 'use strict';
+const {gameModule} = require('../game-source.cjs');
 const assert = require('node:assert/strict');
 const E = require('../engine.cjs');
-const C = require('../vendor/5525/native/campaign.js');
-const B = require('../vendor/5525/native/campaign-battle.js');
+const C = gameModule('campaign.js');
+const B = gameModule('campaign-battle.js');
 const clone = value => JSON.parse(JSON.stringify(value));
 const saved = s => JSON.parse(C.serialize(s));
 const run = (s, options={}) => E.run({cmd:'timeline',save:saved(s),options});
@@ -89,15 +90,29 @@ test('questless routes yield no delivery, and time inspection is not an action r
 function fight(s){
   assert(C.begin(s));
   for(let i=0;i<300&&!s.battle.result;i++){
-    const b=clone(s.battle),actor=b.units.find(u=>u.id===b.actor);B.plan(b,actor);let {kind,target}=actor.intent;
+    const b=clone(s.battle),actor=b.units.find(u=>u.id===b.actor);let {kind,target}=B.chooseAction(b,actor);
     const hurt=b.units.filter(u=>u.side==='ally'&&u.hp>0&&u.hp<u.max*.5).sort((a,b)=>a.hp/a.max-b.hp/b.max).find(u=>B.legal(b,'item',u.id));
-    if(hurt){kind='item';target=hurt.id;}else if(actor.job==='porter'){kind=B.legal(b,'skill',actor.id)?'skill':'guard';target=kind==='skill'?actor.id:null;}
+    if (hurt) {
+      kind = 'item';
+      target = hurt.id;
+    } else if (actor.job === 'porter') {
+      const advances = [...B.paths(b, actor).keys()]
+        .filter(pos => pos % 10 > actor.pos % 10 && B.legalFor(b, actor, 'move', pos))
+        .sort((left, right) => right % 10 - left % 10 || left - right);
+      if (advances.length) {
+        kind = 'move';
+        target = advances[0];
+      } else {
+        kind = B.legal(b, 'skill', actor.id) ? 'skill' : 'guard';
+        target = kind === 'skill' ? actor.id : null;
+      }
+    }
     assert(C.act(s,kind,target));
   }
   assert(s.battle.result);assert(C.finishBattle(s));assert.notEqual(s.result?.outcome,'failed');
 }
 test('camp rest/return are gated by legal phase and current state, arrival is separate',()=>{
-  const s=require('../vendor/5525/native/test-current-fixture.cjs')();assert(C.accept(s,C.board(s)[0].id,porter(s)));assert(C.depart(s,'east'));
+  const s=C.create();assert(C.accept(s,C.board(s)[0].id,porter(s)));assert(C.depart(s,'east'));
   let seed=2;const rng=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
   assert(C.travel(s,'short',rng));assert.equal(run(s).forecasts.length,0);fight(s);assert.equal(s.phase,'camp');
   let r=run(s);assert.deepEqual(r.forecasts.map(f=>f.choice),['short','safe','rest','turnBack']);
