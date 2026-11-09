@@ -1,11 +1,9 @@
 """Native Tk interface. No browser, web server, or third-party UI dependencies."""
 from __future__ import annotations
-import json
 import queue
 import threading
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, font
-from pathlib import Path
 from timeline_ui import TimelinePanel
 from qa_ui import QAPanel
 from save_lab import (Workspace, LabError, engine, save_new, configured_save_directory, TOOL_VERSION,
@@ -285,7 +283,8 @@ class App:
         self.export_button.configure(state='normal')
         self.undo_button.configure(state='normal' if self.work.undo_stack else 'disabled')
         self.reset_button.configure(state='normal' if self.work.undo_stack else 'disabled')
-        self.refresh_compare()
+        self.comparison = self.work.compare()
+        self.render_comparison()
         self.timeline.invalidate()
         self.form_dirty = False; self.refreshing = False
 
@@ -294,7 +293,7 @@ class App:
         if self.refreshing or not selection or selection[0] == self.member_id: return
         if self.form_dirty and not messagebox.askyesno('未反映の入力', '入力中の値を破棄し、別のメンバーを表示しますか', parent=self.root):
             self.members.selection_set(self.member_id); return
-        self.member_id = selection[0]; self.refreshing = True; self.gold.set(str(self.work.info['summary']['gold'])); self.load_member(); self.form_dirty = False; self.refreshing = False; self.refresh_compare()
+        self.member_id = selection[0]; self.refreshing = True; self.gold.set(str(self.work.info['summary']['gold'])); self.load_member(); self.form_dirty = False; self.refreshing = False; self.render_comparison()
 
     def load_member(self):
         m = next(x for x in self.work.info['members'] if x['id'] == self.member_id)
@@ -316,11 +315,6 @@ class App:
             else: var.set('')
             box.configure(values=choices)
 
-    def apply_gold(self):
-        def action():
-            self.work.apply({'gold': int(self.gold.get())}); self.refresh(); self.status.set('作業Bの所持金を反映しました。公式再読込検証に合格')
-        self.guard(action)
-
     def apply_member(self):
         def action():
             values = {key: int(var.get()) for key, var in self.fields.items()}
@@ -330,8 +324,8 @@ class App:
             self.work.apply({'gold': int(self.gold.get()), 'characters': {self.member_id: patch}}); self.refresh(); self.status.set('作業Bに反映しました。装備条件・成長整合性・公式再読込検証に合格')
         self.guard(action)
 
-    def refresh_compare(self):
-        report = self.work.compare()
+    def render_comparison(self):
+        report = self.comparison
         for child in self.compare_tree.get_children(): self.compare_tree.delete(child)
         def show(value):
             return str(value) if value is not None else '—'

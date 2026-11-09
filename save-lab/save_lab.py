@@ -13,6 +13,7 @@ import re
 import time
 from contextlib import closing
 import game_source
+from game_source import offline_mode
 
 ROOT = Path(__file__).resolve().parent
 MAX_BYTES = 1024 * 1024
@@ -74,16 +75,10 @@ def configured_save_directory():
         raise LabError(f'設定したセーブフォルダが見つかりません: {target}')
     return str(target.resolve())
 
-def is_sha(value):
-    return isinstance(value, str) and re.fullmatch(r'[0-9a-f]{40}', value) is not None
-
-def offline_mode():
-    return os.environ.get('SAVE_LAB_OFFLINE', '').strip().lower() in ('1', 'true', 'yes', 'on')
-
 def source_sha(path):
     """game-source.cjs and game_source.py name each checkout after its SHA."""
     name = Path(path).expanduser().resolve().name
-    if not is_sha(name):
+    if not game_source.SHA.fullmatch(name):
         raise LabError(f'ゲームソースのフォルダー名が40桁のコミットIDではありません: {path}')
     return name
 
@@ -403,29 +398,33 @@ class Workspace:
         self.undo_stack = []
         return info
 
+    def _inspect_work(self, save):
+        info = engine('inspect', save=save)
+        info['warnings'] = self.import_warnings + info.get('warnings', [])
+        return info
+
     def apply(self, patch):
         if self.after is None:
             raise LabError('先にセーブを開いてください')
         candidate = engine('edit', save=self.after, patch=patch)
-        info = engine('inspect', save=candidate)
-        info['warnings'] = self.import_warnings + info.get('warnings', [])
+        info = self._inspect_work(candidate)
         self.undo_stack.append(copy.deepcopy(self.after))
         self.after, self.info = candidate, info
         return info
 
     def undo(self):
         if self.undo_stack:
+            info = self._inspect_work(self.undo_stack[-1])
             self.after = self.undo_stack.pop()
-            self.info = engine('inspect', save=self.after)
-            self.info['warnings'] = self.import_warnings + self.info.get('warnings', [])
+            self.info = info
         return self.info
 
     def reset(self):
         if self.before is not None:
+            info = self._inspect_work(self.before)
             self.undo_stack.append(copy.deepcopy(self.after))
             self.after = copy.deepcopy(self.before)
-            self.info = engine('inspect', save=self.after)
-            self.info['warnings'] = self.import_warnings + self.info.get('warnings', [])
+            self.info = info
         return self.info
 
     def compare(self):

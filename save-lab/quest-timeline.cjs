@@ -1,4 +1,5 @@
 'use strict';
+const {verifyRoundtrip} = require('./save-validation.cjs');
 const {gameModule, sourceSha, repository} = require('./game-source.cjs');
 // Read-only probes over independent copies. Never return an importable save.
 const C = gameModule('campaign.js');
@@ -7,12 +8,8 @@ const Envelope = require('./metadata-envelope.cjs');
 const clone = value => JSON.parse(JSON.stringify(value));
 const fail = message => { throw new Error(message); };
 const place = id => C.locations.find(p => p.id === id)?.name || id || '移動中・出発済み';
-function verified(s) {
-  const validation = C.validate(s);
-  if (!validation.ok) fail(validation.error);
-  const raw = C.serialize(s), again = C.deserialize(raw);
-  if (C.serialize(again) !== raw) fail('検証コピーの再読込で差分が生じました');
-  return again;
+function verified(state) {
+  return verifyRoundtrip(state, '検証コピーの再読込で差分が生じました').reloaded;
 }
 function options(value = {}) {
   if (!value || typeof value !== 'object' || Array.isArray(value) || Object.getPrototypeOf(value) !== Object.prototype || Object.getOwnPropertySymbols(value).length) fail('options must be a plain object');
