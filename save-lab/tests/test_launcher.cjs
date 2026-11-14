@@ -82,4 +82,16 @@ if (process.platform !== 'win32') test('real installed Python validates SQLite a
  const env={...process.env};delete env.DISPLAY;delete env.WAYLAND_DISPLAY;
  const gui=L.probePython(candidate,{env});assert.equal(gui.ok,false);assert.match(gui.error,/display|tkinter|TclError/i);
 });
+test('dotenv runtimes reach probes and GUI without overriding explicit environment', () => temp(root => {
+ fs.writeFileSync(path.join(root,'.env'), 'SAVE_LAB_NODE="Node 日本語/node.exe"\nSAVE_LAB_PYTHON="Python 日本語/python.exe"\n');
+ for (const explicit of [false,true]) {
+  const env=explicit?{SAVE_LAB_NODE:'explicit-node',SAVE_LAB_PYTHON:path.join(root,'explicit-python')}:{};
+  let calls=0;
+  const expectedNode=explicit?'explicit-node':path.resolve(root,'Node 日本語/node.exe');
+  const expectedPython=explicit?env.SAVE_LAB_PYTHON:path.resolve(root,'Python 日本語/python.exe');
+  assert.equal(L.main([],{root,env,exists:()=>false,log:()=>{},error:()=>{},
+   spawnSync:(exe,args,opts)=>{calls++;assert.equal(exe,expectedPython);assert.equal(opts.env.SAVE_LAB_NODE,expectedNode);return args.includes('-c')?good(exe):{status:0};}}),0);
+  assert.equal(calls,2);
+ }
+}));
 console.log(`${count} launcher regression groups passed`);

@@ -245,3 +245,29 @@ https://github.com/heydamir/unslop/tree/1d13095e4bef6ad6c74f1dd828d84c4ba309a4dc
 ゲーム側のソースは公式リポジトリから取得します。このパッケージに第三者への公開ライセンスを追加していません。専用リポジトリへ置く際は所有権と公開範囲を確認してください。
 
 [v0.4.0の同期・セーブ相互運用の検証結果](notes/v0.4.0-verification.md)
+
+## ローカル環境
+
+このフォルダの `.env.example` を `.env` にコピーし、利用する実行ファイルやフォルダを設定します。相対パスはこのフォルダが基準です。プロセス環境の指定を優先します。
+# Windows runtime configuration
+
+Both `Start-Save-Lab.cmd` and `Diagnose-Save-Lab.cmd` use `bootstrap.ps1`
+to read the ignored `.env` before starting Node. Copy `.env.example` to
+`.env` and set `SAVE_LAB_NODE` and `SAVE_LAB_PYTHON` to executable paths
+when the runtimes are not available on PATH. Spaces and Unicode are supported;
+matching single or double quotes are optional. Relative paths resolve beside
+`.env`. Values are never evaluated as shell commands.
+
+Explicit process environment variables take precedence over `.env`.
+Without a Node setting, the entry uses `node` from PATH. Python discovery
+retains its existing fallback order: environment, local JSON configuration,
+PATH, then Windows Python launcher registrations. A missing Node exits with
+code 2; missing or unusable Python candidates are reported by diagnosis.
+The diagnostic entry preserves the result code after its pause.
+
+Regression checks (no private `.env` is read by these tests):
+
+```text
+python -m unittest discover -s save-lab/tests -p test_bootstrap.py
+node save-lab/tests/test_launcher.cjs
+```

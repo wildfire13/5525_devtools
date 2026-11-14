@@ -118,7 +118,16 @@ function main(argv = process.argv.slice(2), options = {}) {
   const env = {...(options.env || process.env)};
   const root = options.root || ROOT;
   if (Number(process.versions.node.split('.')[0]) < 18) { err('Node.js 18 or newer is required. No save file was changed.'); return 2; }
-  env.SAVE_LAB_NODE = process.execPath;
+  const localEnv = path.join(root, '.env');
+  if (fs.existsSync(localEnv)) {
+    for (const line of fs.readFileSync(localEnv, 'utf8').split(/\r?\n/)) {
+      const entry = line.trim().match(/^(SAVE_LAB_(?:NODE|PYTHON|SAVE_DIR|CACHE_DIR))\s*=\s*(.*)$/);
+      if (!entry || entry[1] in env) continue;
+      const value = entry[2].trim().replace(/^(['"])(.*)\1$/, '$2');
+      if (value) env[entry[1]] = path.resolve(root, value);
+    }
+  }
+  if (!('SAVE_LAB_NODE' in env)) env.SAVE_LAB_NODE = process.execPath;
   const diagnose = argv.includes('--diagnose');
   const headless = argv.includes('--headless');
   if (argv.some(x => !['--gui','--diagnose','--headless'].includes(x)) || (headless && !diagnose)) {
@@ -127,7 +136,7 @@ function main(argv = process.argv.slice(2), options = {}) {
   let config;
   try { config = readConfig(root); }
   catch (error) { err(error.message); return 2; }
-  if (config.saveDirectory?.trim()) {
+  if (!env.SAVE_LAB_SAVE_DIR && config.saveDirectory?.trim()) {
     const directory = path.resolve(root, config.saveDirectory.trim());
     try { if (!fs.statSync(directory).isDirectory()) throw Error('not a directory'); }
     catch { err('Configured saveDirectory does not exist: ' + directory); return 2; }

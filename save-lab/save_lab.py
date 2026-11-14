@@ -443,7 +443,23 @@ class Workspace:
         engine('inspect', save=self.after)
         return save_new(path, self.after)
 
+def load_paths(root, keys, environ):
+    config = root / '.env'
+    if not config.is_file():
+        return
+    for line in config.read_text(encoding='utf-8-sig').splitlines():
+        name, sep, value = line.partition('=')
+        name, value = name.strip(), value.strip()
+        if not sep or name not in keys or name in environ or not value:
+            continue
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in ('"', "'"):
+            value = value[1:-1]
+        if value:
+            environ[name] = str((root / value).resolve())
+
+
 def main(argv=None):
+    load_paths(Path(__file__).resolve().parent, {"SAVE_LAB_NODE", "SAVE_LAB_PYTHON", "SAVE_LAB_SAVE_DIR", "SAVE_LAB_CACHE_DIR"}, os.environ)
     parser = argparse.ArgumentParser(description='5525 local save manager with automatic game-source updates.')
     parser.add_argument('--version', action='version', version=f'5525 Save Lab {TOOL_VERSION}')
     sub = parser.add_subparsers(dest='command')
